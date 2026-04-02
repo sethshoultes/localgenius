@@ -6,34 +6,6 @@ import ErrorBanner from '@/components/shared/ErrorBanner';
 import { DigestSkeleton } from '@/components/shared/Skeleton';
 import { getDigest, type DigestData } from '@/lib/api';
 
-const MOCK_DIGEST: DigestData = {
-  businessName: "Maria's Kitchen",
-  ownerName: 'Maria',
-  weekOf: 'March 24 – 30, 2026',
-  highlights: [
-    { label: 'website visits', value: '340', change: 'up 12%' },
-    { label: 'new Google reviews', value: '4', change: 'all 4+ stars' },
-    { label: 'bookings through your site', value: '23' },
-  ],
-  actions: [
-    { description: 'Posted 3 times on Instagram and twice on Facebook.' },
-    { description: 'Your Tuesday lunch special post reached 456 people — your best-performing post this month.' },
-    { description: 'Responded to all 4 new reviews.' },
-    { description: 'Updated your Google Business Profile with your new Saturday hours.' },
-  ],
-  recommendation: {
-    text: "You haven't sent an email to past customers in 6 weeks. Want me to send a 'thinking of you' message to customers who haven't visited in 30+ days? I've drafted one for you.",
-    actionType: 'email_campaign',
-    actionId: 'campaign-001',
-  },
-  trendData: [
-    { date: '2026-03-03', value: 210 },
-    { date: '2026-03-10', value: 245 },
-    { date: '2026-03-17', value: 305 },
-    { date: '2026-03-24', value: 340 },
-  ],
-  trendMetric: 'Website visits',
-};
 
 type LoadState = 'loading' | 'loaded' | 'error' | 'empty';
 
@@ -48,9 +20,7 @@ export default function DigestPage() {
       setDigest(data);
       setLoadState('loaded');
     } catch {
-      // Fallback to mock data for demo
-      setDigest(MOCK_DIGEST);
-      setLoadState('loaded');
+      setLoadState('error');
     }
   };
 

@@ -46,16 +46,16 @@ export default function AppShell({
         aria-label="Main navigation"
       >
         <Link
-          href="/"
+          href="/app"
           className={[
             'flex flex-col items-center justify-center gap-1',
             'w-12 h-12 transition-colors duration-100 no-underline',
-            pathname === '/' ? 'text-terracotta' : 'text-slate hover:text-charcoal',
+            pathname === '/app' ? 'text-terracotta' : 'text-slate hover:text-charcoal',
           ].join(' ')}
           role="tab"
-          aria-selected={pathname === '/'}
+          aria-selected={pathname === '/app'}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill={pathname === '/' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill={pathname === '/app' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
           <span className="text-small">Thread</span>

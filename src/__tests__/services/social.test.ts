@@ -542,7 +542,7 @@ describe("createAndPublishPost", () => {
       "topic"
     );
 
-    expect(result.action.content.platform).toBe("instagram");
+    expect((result.action.content as any).platform).toBe("instagram");
     expect(result.published).toBe(false);
   });
 

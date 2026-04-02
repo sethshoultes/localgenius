@@ -475,7 +475,7 @@ describe("Email service — send helper", () => {
     const result = await sendWelcomeEmail("owner@testbiz.com", "Test Biz");
 
     expect(result.success).toBe(true);
-    expect(result.messageId).toBe("");
+    expect((result as any).messageId).toBe("");
   });
 
   it("captures error message from exception", async () => {
@@ -485,7 +485,7 @@ describe("Email service — send helper", () => {
     const result = await sendWelcomeEmail("owner@testbiz.com", "Test Biz");
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Custom API error");
+    expect((result as any).error).toBe("Custom API error");
   });
 
   it("handles non-Error exceptions", async () => {
@@ -494,6 +494,6 @@ describe("Email service — send helper", () => {
     const result = await sendWelcomeEmail("owner@testbiz.com", "Test Biz");
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Unknown email error");
+    expect((result as any).error).toBe("Unknown email error");
   });
 });

@@ -58,7 +58,7 @@ const BUSINESS_WITH_FULL_PROFILE = {
   vertical: "restaurant",
   city: "Austin",
   state: "TX",
-};
+} as any;
 
 const BUSINESS_MISSING_FIELDS = {
   ...TEST_BUSINESS,
@@ -68,7 +68,7 @@ const BUSINESS_MISSING_FIELDS = {
   vertical: "restaurant",
   city: "Austin",
   state: "TX",
-};
+} as any;
 
 const REVIEW_DATA_STRONG = { total: 55, avgRating: 4.7, recent: 6, responded: 50 };
 const REVIEW_DATA_WEAK = { total: 5, avgRating: 3.2, recent: 0, responded: 0 };
@@ -175,7 +175,7 @@ describe("SEO Service — runAudit()", () => {
 
   it("returns a low score and recommendations for a business with weak data", async () => {
     setupSelectSequence(
-      BUSINESS_MISSING_FIELDS,
+      BUSINESS_MISSING_FIELDS as any,
       REVIEW_DATA_WEAK,
       CONTENT_DATA_WEAK,
       TRAFFIC_DATA_WEAK,
@@ -249,7 +249,7 @@ describe("SEO Service — runAudit()", () => {
 
   it("sorts recommendations by priority (high first)", async () => {
     setupSelectSequence(
-      BUSINESS_MISSING_FIELDS,
+      BUSINESS_MISSING_FIELDS as any,
       REVIEW_DATA_WEAK,
       CONTENT_DATA_WEAK,
       TRAFFIC_DATA_WEAK,

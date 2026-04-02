@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { sql } from "drizzle-orm";
 import { getServiceStatus } from "@/lib/env";
 
 /**
@@ -17,7 +18,7 @@ export async function GET() {
     try {
       const { getDb } = await import("@/lib/db");
       const db = getDb();
-      await db.execute({ sql: "SELECT 1", params: [] } as never);
+      await db.execute(sql`SELECT 1`);
       dbStatus = "connected";
     } catch {
       dbStatus = "disconnected";

@@ -108,6 +108,7 @@ export const organizations = pgTable("organizations", {
   name: text("name").notNull(),
   plan: planEnum("plan").notNull().default("base"),
   stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

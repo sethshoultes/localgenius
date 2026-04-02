@@ -1,0 +1,98 @@
+[05:55:06.153] [INFO] Running addon-a11y-addon-test automigration
+[05:55:06.153] [DEBUG] Extracting storybook data...
+[05:55:06.153] [DEBUG] Getting Storybook info...
+[05:55:06.276] [DEBUG] Loading main config...
+[05:55:06.276] [DEBUG] Getting stories paths...
+[05:55:06.301] [DEBUG] Getting package manager...
+[05:55:06.309] [DEBUG] Getting package.json info for /Users/sethshoultes/Local Sites/localgenius/package.json...
+[05:55:06.309] [DEBUG] Getting Storybook version...
+[05:55:06.309] [DEBUG] Detecting CSF factory usage...
+[05:55:06.327] [INFO] Checking possible migrations..
+[05:55:06.327] [DEBUG] Running addon-a11y-addon-test migration checks
+[05:55:06.329] [DEBUG] End of addon-a11y-addon-test migration checks
+[05:55:06.329] [INFO] 🔎 found a 'addon-a11y-addon-test' migration:
+[05:55:06.330] [INFO] ✅ ran addon-a11y-addon-test migration
+[05:55:06.330] [INFO] Migration check ran successfully
+[05:55:06.330] [INFO] Successful migrations:
+
+addon-a11y-addon-test
+
+─────────────────────────────────────────────────
+
+If you'd like to run the migrations again, you can do so by running 
+npx storybook automigrate
+
+The automigrations try to migrate common patterns in your project, but might not contain everything needed to migrate to the latest version of Storybook.
+
+Please check the changelog and migration guide for manual migrations and more information: 
+https://storybook.js.org/docs/releases/migration-guide?ref=upgrade
+And reach out on Discord if you need help: https://discord.gg/storybook
+[05:55:06.330] [INFO] Installing dependencies...
+[05:55:06.330] [DEBUG] Executing command: npm install
+[05:55:11.486] [ERROR] Installation of dependencies failed! {"error":"ExecaError: Command failed with exit code 1: npm install\n\nnpm error code ERESOLVE\nnpm error ERESOLVE unable to resolve dependency tree\nnpm error\nnpm error While resolving: localgenius@0.1.0\nnpm error Found: vitest@2.1.9\nnpm error node_modules/vitest\nnpm error   dev vitest@\"^2.1.9\" from the root project\nnpm error   peer vitest@\"2.1.9\" from @vitest/browser@2.1.9\nnpm error   node_modules/@vitest/browser\nnpm error     dev @vitest/browser@\"^2.1.9\" from the root project\nnpm error     peerOptional @vitest/browser@\"2.1.9\" from vitest@2.1.9\nnpm error   1 more (@vitest/ui)\nnpm error\nnpm error Could not resolve dependency:\nnpm error peerOptional vitest@\"^3.0.0 || ^4.0.0\" from @storybook/addon-vitest@10.3.4\nnpm error node_modules/@storybook/addon-vitest\nnpm error   dev @storybook/addon-vitest@\"^10.3.4\" from the root project\nnpm error\nnpm error Fix the upstream dependency conflict, or retry\nnpm error this command with --force or --legacy-peer-deps\nnpm error to accept an incorrect (and potentially broken) dependency resolution.\nnpm error\nnpm error\nnpm error For a full report see:\nnpm error /Users/sethshoultes/.npm/_logs/2026-04-02T11_55_06_457Z-eresolve-report.txt\nnpm error A complete log of this run can be found in: /Users/sethshoultes/.npm/_logs/2026-04-02T11_55_06_457Z-debug-0.log\n    at getFinalError (file:///Users/sethshoultes/.npm/_npx/f04738d1b719dc9c/node_modules/storybook/dist/_node-chunks/chunk-3LP2BDDH.js:13112:10)\n    at makeError (file:///Users/sethshoultes/.npm/_npx/f04738d1b719dc9c/node_modules/storybook/dist/_node-chunks/chunk-3LP2BDDH.js:14648:15)\n    at getAsyncResult (file:///Users/sethshoultes/.npm/_npx/f04738d1b719dc9c/node_modules/storybook/dist/_node-chunks/chunk-3LP2BDDH.js:17294:158)\n    at handlePromise (file:///Users/sethshoultes/.npm/_npx/f04738d1b719dc9c/node_modules/storybook/dist/_node-chunks/chunk-3LP2BDDH.js:17280:162)\n    at async Object.executeTaskWithSpinner (file:///Users/sethshoultes/.npm/_npx/f04738d1b719dc9c/node_modules/storybook/dist/_node-chunks/chunk-CSY5TWXV.js:3683:11)\n    at async NPMProxy.installDependencies (file:///Users/sethshoultes/.npm/_npx/f04738d1b719dc9c/node_modules/storybook/dist/_node-chunks/chunk-3LP2BDDH.js:11261:5)\n    at async doAutomigrate (file:///Users/sethshoultes/.npm/_npx/f04738d1b719dc9c/node_modules/@storybook/cli/dist/_node-chunks/run-EN64L6LH.js:7784:32)\n    at async file:///Users/sethshoultes/.npm/_npx/f04738d1b719dc9c/node_modules/@storybook/cli/dist/_node-chunks/run-EN64L6LH.js:9727:90\n    at async withTelemetry (file:///Users/sethshoultes/.npm/_npx/f04738d1b719dc9c/node_modules/storybook/dist/_node-chunks/chunk-HUYNFPPD.js:225:12)"}
+[05:55:11.486] [ERROR] [38;2;241;97;97mExecaError: Command failed with exit code 1: npm install
+
+npm error code ERESOLVE
+npm error ERESOLVE unable to resolve dependency tree
+npm error
+npm error While resolving: localgenius@0.1.0
+npm error Found: vitest@2.1.9
+npm error node_modules/vitest
+npm error   dev vitest@"^2.1.9" from the root project
+npm error   peer vitest@"2.1.9" from @vitest/browser@2.1.9
+npm error   node_modules/@vitest/browser
+npm error     dev @vitest/browser@"^2.1.9" from the root project
+npm error     peerOptional @vitest/browser@"2.1.9" from vitest@2.1.9
+npm error   1 more (@vitest/ui)
+npm error
+npm error Could not resolve dependency:
+npm error peerOptional vitest@"^3.0.0 || ^4.0.0" from @storybook/addon-vitest@10.3.4
+npm error node_modules/@storybook/addon-vitest
+npm error   dev @storybook/addon-vitest@"^10.3.4" from the root project
+npm error
+npm error Fix the upstream dependency conflict, or retry
+npm error this command with --force or --legacy-peer-deps
+npm error to accept an incorrect (and potentially broken) dependency resolution.
+npm error
+npm error
+npm error For a full report see:
+npm error /Users/sethshoultes/.npm/_logs/2026-04-02T11_55_06_457Z-eresolve-report.txt
+npm error A complete log of this run can be found in: /Users/sethshoultes/.npm/_logs/2026-04-02T11_55_06_457Z-debug-0.log[39m
+    at getFinalError (file:///Users/sethshoultes/.npm/_npx/f04738d1b719dc9c/node_modules/storybook/dist/_node-chunks/chunk-3LP2BDDH.js:13112:10)
+    at makeError (file:///Users/sethshoultes/.npm/_npx/f04738d1b719dc9c/node_modules/storybook/dist/_node-chunks/chunk-3LP2BDDH.js:14648:15)
+    at getAsyncResult (file:///Users/sethshoultes/.npm/_npx/f04738d1b719dc9c/node_modules/storybook/dist/_node-chunks/chunk-3LP2BDDH.js:17294:158)
+    at handlePromise (file:///Users/sethshoultes/.npm/_npx/f04738d1b719dc9c/node_modules/storybook/dist/_node-chunks/chunk-3LP2BDDH.js:17280:162)
+    at async Object.executeTaskWithSpinner (file:///Users/sethshoultes/.npm/_npx/f04738d1b719dc9c/node_modules/storybook/dist/_node-chunks/chunk-CSY5TWXV.js:3683:11)
+    at async NPMProxy.installDependencies (file:///Users/sethshoultes/.npm/_npx/f04738d1b719dc9c/node_modules/storybook/dist/_node-chunks/chunk-3LP2BDDH.js:11261:5)
+    at async doAutomigrate (file:///Users/sethshoultes/.npm/_npx/f04738d1b719dc9c/node_modules/@storybook/cli/dist/_node-chunks/run-EN64L6LH.js:7784:32)
+    at async file:///Users/sethshoultes/.npm/_npx/f04738d1b719dc9c/node_modules/@storybook/cli/dist/_node-chunks/run-EN64L6LH.js:9727:90
+    at async withTelemetry (file:///Users/sethshoultes/.npm/_npx/f04738d1b719dc9c/node_modules/storybook/dist/_node-chunks/chunk-HUYNFPPD.js:225:12)
+[05:55:11.488] [INFO] Storybook collects completely anonymous usage telemetry. We use it to shape Storybook's roadmap and prioritize features. You can learn more, including how to opt out, at https://storybook.js.org/telemetry
+[05:55:12.049] [ERROR] ExecaError: Command failed with exit code 1: npm install
+
+npm error code ERESOLVE
+npm error ERESOLVE unable to resolve dependency tree
+npm error
+npm error While resolving: localgenius@0.1.0
+npm error Found: vitest@2.1.9
+npm error node_modules/vitest
+npm error   dev vitest@"^2.1.9" from the root project
+npm error   peer vitest@"2.1.9" from @vitest/browser@2.1.9
+npm error   node_modules/@vitest/browser
+npm error     dev @vitest/browser@"^2.1.9" from the root project
+npm error     peerOptional @vitest/browser@"2.1.9" from vitest@2.1.9
+npm error   1 more (@vitest/ui)
+npm error
+npm error Could not resolve dependency:
+npm error peerOptional vitest@"^3.0.0 || ^4.0.0" from @storybook/addon-vitest@10.3.4
+npm error node_modules/@storybook/addon-vitest
+npm error   dev @storybook/addon-vitest@"^10.3.4" from the root project
+npm error
+npm error Fix the upstream dependency conflict, or retry
+npm error this command with --force or --legacy-peer-deps
+npm error to accept an incorrect (and potentially broken) dependency resolution.
+npm error
+npm error
+npm error For a full report see:
+npm error /Users/sethshoultes/.npm/_logs/2026-04-02T11_55_06_457Z-eresolve-report.txt
+npm error A complete log of this run can be found in: /Users/sethshoultes/.npm/_logs/2026-04-02T11_55_06_457Z-debug-0.log

@@ -80,7 +80,7 @@ export default function UserMenu() {
             <button
               onClick={() => {
                 setIsOpen(false);
-                // TODO: navigate to notification preferences conversation
+                window.location.href = '/app';
               }}
               className="w-full px-4 py-3 text-left text-body text-charcoal hover:bg-cream transition-colors flex items-center gap-3 min-h-tap-min"
               role="menuitem"

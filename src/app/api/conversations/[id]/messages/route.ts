@@ -142,10 +142,8 @@ export async function POST(
     }
     console.error("[messages] Error:", error);
     const cause = (error as { cause?: Error })?.cause;
-    if (cause) console.error("[messages] Cause:", cause);
-    const message = error instanceof Error ? error.message : "Failed to send message";
-    const debug = cause ? `${message} (cause: ${cause.message})` : message;
-    return NextResponse.json({ error: { code: "INTERNAL_ERROR", message: debug } }, { status: 500 });
+    if (cause) console.error("[messages] Cause:", cause.message);
+    return NextResponse.json({ error: { code: "INTERNAL_ERROR", message: "Failed to send message" } }, { status: 500 });
   }
 }
 

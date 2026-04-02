@@ -12,6 +12,7 @@ import {
   streamMessage,
   publishContent,
   sendMessage,
+  respondToReview,
   type Message,
   ApiError,
 } from '@/lib/api';
@@ -215,6 +216,57 @@ export default function ThreadPage() {
     [],
   );
 
+  const handleReviewRespond = useCallback(
+    async (reviewId: string, response: string) => {
+      try {
+        await respondToReview(reviewId, response);
+      } catch {
+        setError('Failed to send your response. Please try again.');
+      }
+    },
+    [],
+  );
+
+  const handleScheduleCancel = useCallback(
+    async (messageId: string) => {
+      if (!conversationId) return;
+      try {
+        await sendMessage(conversationId, `Cancel scheduled post: ${messageId}`);
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === messageId
+              ? { ...m, metadata: { ...m.metadata, status: 'dismissed' as const } }
+              : m,
+          ),
+        );
+      } catch {
+        setError('Failed to cancel. Please try again.');
+      }
+    },
+    [conversationId],
+  );
+
+  const handleInsightAction = useCallback(
+    async (messageId: string, action: 'accept' | 'dismiss') => {
+      if (!conversationId) return;
+      try {
+        if (action === 'accept') {
+          await sendMessage(conversationId, `Act on insight: ${messageId}`);
+        }
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === messageId
+              ? { ...m, metadata: { ...m.metadata, status: action === 'accept' ? 'approved' as const : 'dismissed' as const } }
+              : m,
+          ),
+        );
+      } catch {
+        setError('Something went wrong. Please try again.');
+      }
+    },
+    [conversationId],
+  );
+
   const displayMessages = [...messages];
   if (streamingContent) {
     displayMessages.push({
@@ -245,6 +297,9 @@ export default function ThreadPage() {
         onApprove={handleApprove}
         onEdit={handleEdit}
         onSettingsSave={handleSettingsSave}
+        onReviewRespond={handleReviewRespond}
+        onScheduleCancel={handleScheduleCancel}
+        onInsightAction={handleInsightAction}
       />
 
       {/* Quick actions + spacer for fixed input bar */}

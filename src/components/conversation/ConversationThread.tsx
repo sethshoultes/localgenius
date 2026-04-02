@@ -45,6 +45,9 @@ interface ConversationThreadProps {
   onApprove?: (message: ThreadMessage) => void;
   onEdit?: (message: ThreadMessage) => void;
   onSettingsSave?: (values: Record<string, string>) => Promise<void>;
+  onReviewRespond?: (reviewId: string, response: string) => void;
+  onScheduleCancel?: (messageId: string) => void;
+  onInsightAction?: (messageId: string, action: 'accept' | 'dismiss') => void;
 }
 
 export default function ConversationThread({
@@ -53,6 +56,9 @@ export default function ConversationThread({
   onApprove,
   onEdit,
   onSettingsSave,
+  onReviewRespond,
+  onScheduleCancel,
+  onInsightAction,
 }: ConversationThreadProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -155,7 +161,7 @@ export default function ConversationThread({
             description={msg.content}
             scheduledTime={msg.metadata?.scheduledTime ?? ''}
             platform={msg.metadata?.platform ?? 'instagram'}
-            onCancel={() => {/* TODO: call cancel endpoint */}}
+            onCancel={() => onScheduleCancel?.(msg.id)}
             timestamp={msg.timestamp}
           />
         );
@@ -166,8 +172,8 @@ export default function ConversationThread({
             key={msg.id}
             insight={msg.metadata?.insight ?? msg.content}
             suggestion={msg.metadata?.suggestion ?? ''}
-            onAccept={() => {/* TODO: act on insight */}}
-            onDismiss={() => {/* TODO: dismiss insight */}}
+            onAccept={() => onInsightAction?.(msg.id, 'accept')}
+            onDismiss={() => onInsightAction?.(msg.id, 'dismiss')}
             timestamp={msg.timestamp}
           />
         );
@@ -183,11 +189,11 @@ export default function ConversationThread({
             draftResponse={msg.metadata?.draftResponse ?? ''}
             onApproveResponse={(response) => {
               if (msg.metadata?.reviewId) {
-                // TODO: call respondToReview
+                onReviewRespond?.(msg.metadata.reviewId, response);
               }
             }}
-            onEditResponse={(response) => {
-              // TODO: open edit flow
+            onEditResponse={() => {
+              onEdit?.(msg);
             }}
             timestamp={msg.timestamp}
           />

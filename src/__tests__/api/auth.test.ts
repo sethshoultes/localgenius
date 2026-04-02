@@ -1,5 +1,6 @@
 /**
- * Tests for POST /api/auth/register and POST /api/auth/login
+ * Tests for POST /api/auth/register, POST /api/auth/login,
+ * POST /api/auth/refresh, POST /api/auth/logout, GET /api/auth/session
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -54,6 +55,23 @@ vi.mock("@/api/middleware/auth", () => ({
   issueAccessToken: (...args: unknown[]) => mockIssueAccessToken(...args),
   issueRefreshToken: (...args: unknown[]) => mockIssueRefreshToken(...args),
   verifyAuth: vi.fn(),
+}));
+
+// Mock jose (used by refresh and session routes)
+const mockJwtVerify = vi.fn();
+const mockDecodeJwt = vi.fn();
+
+vi.mock("jose", () => ({
+  jwtVerify: (...args: unknown[]) => mockJwtVerify(...args),
+  decodeJwt: (...args: unknown[]) => mockDecodeJwt(...args),
+  errors: {
+    JWTExpired: class JWTExpired extends Error {
+      constructor(message = "jwt expired") {
+        super(message);
+        this.name = "JWTExpired";
+      }
+    },
+  },
 }));
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -315,5 +333,268 @@ describe("JWT token verification", () => {
   it("issueRefreshToken is called with userId string", async () => {
     await mockIssueRefreshToken("user-uuid-001");
     expect(mockIssueRefreshToken).toHaveBeenCalledWith(expect.any(String));
+  });
+});
+
+// ─── Tests: Refresh ─────────────────────────────────────────────────────────
+
+describe("POST /api/auth/refresh", () => {
+  let refreshHandler: typeof import("@/app/api/auth/refresh/route").POST;
+
+  const VALID_JWT_PAYLOAD = {
+    sub: TEST_USER.id,
+    org: TEST_ORG.id,
+    biz: TEST_BUSINESS.id,
+    plan: "base",
+  };
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+
+    // Default: valid token verification
+    mockJwtVerify.mockResolvedValue({ payload: VALID_JWT_PAYLOAD });
+    mockIssueAccessToken.mockResolvedValue("mock-new-access-token-jwt");
+
+    const mod = await import("@/app/api/auth/refresh/route");
+    refreshHandler = mod.POST;
+  });
+
+  it("returns refreshed: true and sets cookie on valid session", async () => {
+    const request = new NextRequest("http://localhost:3000/api/auth/refresh", {
+      method: "POST",
+    });
+    request.cookies.set("lg_session", "valid-jwt-token");
+
+    const response = await refreshHandler(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.refreshed).toBe(true);
+    expect(body.meta.timestamp).toBeDefined();
+
+    // Verify issueAccessToken was called with correct context
+    expect(mockIssueAccessToken).toHaveBeenCalledWith({
+      userId: TEST_USER.id,
+      organizationId: TEST_ORG.id,
+      businessId: TEST_BUSINESS.id,
+      plan: "base",
+    });
+
+    // Verify cookie was set on the response
+    const setCookie = response.cookies.get("lg_session");
+    expect(setCookie?.value).toBe("mock-new-access-token-jwt");
+  });
+
+  it("returns 401 NO_SESSION when no cookie is present", async () => {
+    const request = new NextRequest("http://localhost:3000/api/auth/refresh", {
+      method: "POST",
+    });
+
+    const response = await refreshHandler(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(body.error.code).toBe("NO_SESSION");
+  });
+
+  it("refreshes an expired token within grace period", async () => {
+    // Simulate JWTExpired error from jose
+    const { errors } = await import("jose");
+    mockJwtVerify.mockRejectedValue(new errors.JWTExpired("jwt expired"));
+
+    // Token expired 5 minutes ago (within 30-min grace period)
+    const fiveMinAgo = Math.floor((Date.now() - 5 * 60 * 1000) / 1000);
+    mockDecodeJwt.mockReturnValue({ ...VALID_JWT_PAYLOAD, exp: fiveMinAgo });
+
+    const request = new NextRequest("http://localhost:3000/api/auth/refresh", {
+      method: "POST",
+    });
+    request.cookies.set("lg_session", "expired-jwt-token");
+
+    const response = await refreshHandler(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.refreshed).toBe(true);
+    expect(mockIssueAccessToken).toHaveBeenCalled();
+  });
+
+  it("returns 401 SESSION_EXPIRED when token is expired beyond grace period", async () => {
+    const { errors } = await import("jose");
+    mockJwtVerify.mockRejectedValue(new errors.JWTExpired("jwt expired"));
+
+    // Token expired 60 minutes ago (beyond 30-min grace period)
+    const sixtyMinAgo = Math.floor((Date.now() - 60 * 60 * 1000) / 1000);
+    mockDecodeJwt.mockReturnValue({ ...VALID_JWT_PAYLOAD, exp: sixtyMinAgo });
+
+    const request = new NextRequest("http://localhost:3000/api/auth/refresh", {
+      method: "POST",
+    });
+    request.cookies.set("lg_session", "old-expired-jwt-token");
+
+    const response = await refreshHandler(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(body.error.code).toBe("SESSION_EXPIRED");
+  });
+
+  it("returns 401 INVALID_SESSION for a tampered token", async () => {
+    mockJwtVerify.mockRejectedValue(new Error("invalid signature"));
+
+    const request = new NextRequest("http://localhost:3000/api/auth/refresh", {
+      method: "POST",
+    });
+    request.cookies.set("lg_session", "tampered-jwt-token");
+
+    const response = await refreshHandler(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(body.error.code).toBe("INVALID_SESSION");
+  });
+});
+
+// ─── Tests: Logout ──────────────────────────────────────────────────────────
+
+describe("POST /api/auth/logout", () => {
+  let logoutHandler: typeof import("@/app/api/auth/logout/route").POST;
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+
+    const mod = await import("@/app/api/auth/logout/route");
+    logoutHandler = mod.POST;
+  });
+
+  it("returns loggedOut: true and clears the session cookie", async () => {
+    const response = await logoutHandler();
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.loggedOut).toBe(true);
+    expect(body.meta.timestamp).toBeDefined();
+
+    // Verify cookie is cleared (maxAge 0 = expire immediately)
+    const setCookie = response.cookies.get("lg_session");
+    expect(setCookie?.value).toBe("");
+  });
+});
+
+// ─── Tests: Session ─────────────────────────────────────────────────────────
+
+describe("GET /api/auth/session", () => {
+  let sessionHandler: typeof import("@/app/api/auth/session/route").GET;
+
+  const VALID_JWT_PAYLOAD = {
+    sub: TEST_USER.id,
+    org: TEST_ORG.id,
+    biz: TEST_BUSINESS.id,
+    plan: "base",
+  };
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+
+    // Default: valid token, user and business found
+    mockJwtVerify.mockResolvedValue({ payload: VALID_JWT_PAYLOAD });
+
+    let selectCallCount = 0;
+    mockSelectLimitResult.mockImplementation(() => {
+      selectCallCount++;
+      switch (selectCallCount) {
+        case 1: return Promise.resolve([{ id: TEST_USER.id, email: TEST_USER.email, name: TEST_USER.name }]);
+        case 2: return Promise.resolve([{ id: TEST_BUSINESS.id, name: TEST_BUSINESS.name, vertical: TEST_BUSINESS.vertical }]);
+        default: return Promise.resolve([]);
+      }
+    });
+
+    const mod = await import("@/app/api/auth/session/route");
+    sessionHandler = mod.GET;
+  });
+
+  it("returns user and business data for a valid session", async () => {
+    const request = new NextRequest("http://localhost:3000/api/auth/session", {
+      method: "GET",
+    });
+    request.cookies.set("lg_session", "valid-jwt-token");
+
+    const response = await sessionHandler(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.user.id).toBe(TEST_USER.id);
+    expect(body.data.user.email).toBe(TEST_USER.email);
+    expect(body.data.user.name).toBe(TEST_USER.name);
+    expect(body.data.business.id).toBe(TEST_BUSINESS.id);
+    expect(body.data.business.name).toBe(TEST_BUSINESS.name);
+    expect(body.data.business.vertical).toBe(TEST_BUSINESS.vertical);
+    expect(body.data.plan).toBe("base");
+  });
+
+  it("returns data: null when no cookie is present", async () => {
+    const request = new NextRequest("http://localhost:3000/api/auth/session", {
+      method: "GET",
+    });
+
+    const response = await sessionHandler(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data).toBeNull();
+  });
+
+  it("returns data: null when user is not found in database", async () => {
+    mockSelectLimitResult.mockResolvedValue([]);
+
+    const request = new NextRequest("http://localhost:3000/api/auth/session", {
+      method: "GET",
+    });
+    request.cookies.set("lg_session", "valid-jwt-token");
+
+    const response = await sessionHandler(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data).toBeNull();
+  });
+
+  it("returns data: null when JWT verification fails", async () => {
+    mockJwtVerify.mockRejectedValue(new Error("invalid token"));
+
+    const request = new NextRequest("http://localhost:3000/api/auth/session", {
+      method: "GET",
+    });
+    request.cookies.set("lg_session", "bad-jwt-token");
+
+    const response = await sessionHandler(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data).toBeNull();
+  });
+
+  it("returns business: null when business is not found", async () => {
+    let selectCallCount = 0;
+    mockSelectLimitResult.mockImplementation(() => {
+      selectCallCount++;
+      switch (selectCallCount) {
+        case 1: return Promise.resolve([{ id: TEST_USER.id, email: TEST_USER.email, name: TEST_USER.name }]);
+        case 2: return Promise.resolve([]); // no business found
+        default: return Promise.resolve([]);
+      }
+    });
+
+    const request = new NextRequest("http://localhost:3000/api/auth/session", {
+      method: "GET",
+    });
+    request.cookies.set("lg_session", "valid-jwt-token");
+
+    const response = await sessionHandler(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.user.id).toBe(TEST_USER.id);
+    expect(body.data.business).toBeNull();
   });
 });

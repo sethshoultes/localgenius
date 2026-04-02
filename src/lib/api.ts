@@ -38,6 +38,7 @@ export interface Message {
     reviewId?: string;
     contentId?: string;
     platform?: string;
+    fields?: { key: string; label: string; value: string; type?: 'text' | 'tel' | 'url' | 'textarea'; placeholder?: string }[];
   };
   createdAt: string;
 }

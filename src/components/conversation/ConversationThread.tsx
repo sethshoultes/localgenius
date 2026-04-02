@@ -3,8 +3,9 @@
 import { useRef, useEffect } from 'react';
 import MessageBubble from './MessageBubble';
 import ApprovalCard from './ApprovalCard';
+import SettingsCard from './SettingsCard';
 
-export type ThreadMessageType = 'user_message' | 'system_message' | 'approval_card' | 'report_card';
+export type ThreadMessageType = 'user_message' | 'system_message' | 'approval_card' | 'report_card' | 'settings_card';
 
 export interface ThreadMessage {
   id: string;
@@ -17,6 +18,7 @@ export interface ThreadMessage {
     primaryLabel?: string;
     secondaryLabel?: string;
     status?: 'pending' | 'approved' | 'dismissed' | 'published' | 'scheduled';
+    fields?: { key: string; label: string; value: string; type?: 'text' | 'tel' | 'url' | 'textarea'; placeholder?: string }[];
   };
 }
 
@@ -92,6 +94,21 @@ export default function ConversationThread({
             <p className="text-body text-charcoal">{msg.content}</p>
             <span className="text-caption text-slate mt-2 block">{msg.timestamp}</span>
           </div>
+        );
+
+      case 'settings_card':
+        return (
+          <SettingsCard
+            key={msg.id}
+            title={msg.metadata?.title ?? 'Update details'}
+            description={msg.content}
+            fields={msg.metadata?.fields ?? []}
+            onSave={async (values) => {
+              // TODO: POST to business update endpoint
+              console.log('Settings saved:', values);
+            }}
+            timestamp={msg.timestamp}
+          />
         );
 
       default:

@@ -148,6 +148,43 @@ function streamMessage(
 ): () => void {
   let cancelled = false;
 
+  // Settings requests return a structured settings_card instead of streaming text
+  const isSettingsRequest = /hours|phone|address|name|update my|change my/i.test(content);
+
+  if (isSettingsRequest) {
+    (async () => {
+      await delay(300);
+      if (cancelled) return;
+
+      onChunk("Sure, let me pull up your details.");
+      await new Promise((r) => setTimeout(r, 500));
+      if (cancelled) return;
+
+      onComplete({
+        id: uid(),
+        conversationId,
+        role: 'assistant',
+        content: "Here are your current details. Edit anything and tap Save.",
+        type: 'approval' as const,
+        metadata: {
+          title: 'Update your business details',
+          status: 'pending' as const,
+          primaryLabel: 'Save',
+          secondaryLabel: 'Cancel',
+          fields: [
+            { key: 'name', label: 'Business name', value: "Maria's Kitchen", type: 'text' as const },
+            { key: 'phone', label: 'Phone', value: '(512) 555-0147', type: 'tel' as const },
+            { key: 'hours', label: 'Hours', value: 'Mon-Sat 11am-10pm, Sun 11am-9pm', type: 'text' as const },
+            { key: 'address', label: 'Address', value: '1401 S Lamar Blvd, Austin, TX 78704', type: 'text' as const },
+          ],
+        },
+        createdAt: new Date().toISOString(),
+      });
+    })();
+
+    return () => { cancelled = true; };
+  }
+
   const isLunchRelated =
     /lunch|special|brisket|taco/i.test(content);
 

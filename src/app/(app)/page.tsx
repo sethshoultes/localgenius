@@ -19,10 +19,12 @@ function apiMessageToThread(msg: Message): ThreadMessage {
     type:
       msg.role === 'user'
         ? 'user_message'
-        : msg.type === 'approval'
-          ? 'approval_card'
-          : msg.type === 'report'
-            ? 'report_card'
+        : msg.type === 'approval' && msg.metadata?.fields
+          ? 'settings_card'
+          : msg.type === 'approval'
+            ? 'approval_card'
+            : msg.type === 'report'
+              ? 'report_card'
             : 'system_message',
     content: msg.content,
     timestamp: formatTimestamp(msg.createdAt),

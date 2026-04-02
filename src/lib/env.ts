@@ -51,8 +51,6 @@ const envSchema = z.object({
   SENTRY_DSN: z.string().optional(),
   NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
   NEXT_PUBLIC_APP_URL: z.string().default("http://localhost:3000"),
-  NEXT_PUBLIC_DEMO_MODE: z.string().optional(),
-
   CORS_ALLOWED_ORIGIN: z.string().optional(),
 
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),

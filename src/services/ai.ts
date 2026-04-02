@@ -7,9 +7,16 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+let _anthropic: Anthropic | null = null;
+
+function getClient(): Anthropic {
+  if (!_anthropic) {
+    _anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+    });
+  }
+  return _anthropic;
+}
 
 const SYSTEM_PROMPT = `You are LocalGenius, an AI marketing assistant for local businesses. You speak like a capable, warm colleague — not a chatbot. You are the employee they always needed but could never afford.
 
@@ -66,7 +73,7 @@ export async function generate(options: GenerateOptions): Promise<string> {
     ? `\n\nBusiness context:\n${JSON.stringify(businessContext, null, 2)}`
     : "";
 
-  const response = await anthropic.messages.create({
+  const response = await getClient().messages.create({
     model,
     max_tokens: maxTokens,
     system: systemPrompt + contextBlock,
@@ -90,7 +97,7 @@ export async function* stream(options: GenerateOptions) {
     ? `\n\nBusiness context:\n${JSON.stringify(businessContext, null, 2)}`
     : "";
 
-  const messageStream = anthropic.messages.stream({
+  const messageStream = getClient().messages.stream({
     model,
     max_tokens: maxTokens,
     system: systemPrompt + contextBlock,

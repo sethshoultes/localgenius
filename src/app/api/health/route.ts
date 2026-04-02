@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { sql } from "drizzle-orm";
 import { getServiceStatus } from "@/lib/env";
 
+export const dynamic = "force-dynamic";
+
 /**
  * GET /api/health — Deep health check
  *

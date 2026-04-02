@@ -140,6 +140,7 @@ export async function POST(
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: { code: "VALIDATION_ERROR", message: "Invalid message", details: error.errors } }, { status: 400 });
     }
+    console.error("[messages] Error:", error);
     const message = error instanceof Error ? error.message : "Failed to send message";
     return NextResponse.json({ error: { code: "INTERNAL_ERROR", message } }, { status: 500 });
   }

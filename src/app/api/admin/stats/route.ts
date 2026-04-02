@@ -13,6 +13,7 @@ import {
 } from "@/db/schema";
 import { sql, eq } from "drizzle-orm";
 import { verifyAuth } from "@/api/middleware/auth";
+import { getAllUsageSummary } from "@/services/usage-metering";
 
 /**
  * GET /api/admin/stats
@@ -136,6 +137,7 @@ export async function GET(request: NextRequest) {
             ? `${((estimatedAiCostCents / 100 / mrr) * 100).toFixed(1)}%`
             : "N/A",
       },
+      usageMetering: await getAllUsageSummary(),
       timestamp: new Date().toISOString(),
     },
   });

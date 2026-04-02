@@ -22,6 +22,7 @@ import { eq, and, gte, desc, sql } from "drizzle-orm";
 import { generateDigestNarrative } from "./ai";
 import { getWeeklyAggregates, getAttributionSummary } from "./analytics";
 import { getReviewTrends } from "./reviews";
+import { getCompetitorDigestSection } from "./competitor-monitor";
 
 interface DigestData {
   business: { id: string; name: string; vertical: string; city: string };
@@ -29,6 +30,7 @@ interface DigestData {
   actionsCompleted: Record<string, number>;
   reviewTrends: Record<string, number>;
   attribution: Record<string, number>;
+  competitorContext: Record<string, unknown> | null;
   narrative: string;
 }
 
@@ -82,17 +84,40 @@ export async function generateDigest(
     gbpUpdates: Number(actionCounts?.gbpUpdates || 0),
   };
 
-  // Generate the narrative using AI
+  // Gather competitor comparison data (if any competitors are tracked)
+  const competitorSection = await getCompetitorDigestSection(businessId);
+  const competitorContext = competitorSection
+    ? {
+        businessRating: competitorSection.businessRating,
+        businessReviewCount: competitorSection.businessReviewCount,
+        businessReviewDelta: competitorSection.businessReviewDelta,
+        competitors: competitorSection.competitors.map((c) => ({
+          name: c.competitorName,
+          rating: c.competitorRating,
+          reviewCount: c.competitorReviewCount,
+          reviewDelta: c.competitorReviewDelta,
+        })),
+        summary: competitorSection.summary,
+      }
+    : null;
+
+  // Generate the narrative using AI (now includes competitor context)
+  const narrativeMetrics: Record<string, unknown> = {
+    ...metrics,
+    ...actionsCompleted,
+    averageRating: reviewTrends.recentAverageRating,
+    totalReviews: reviewTrends.totalReviews,
+    newReviews: reviewTrends.recentReviews,
+    attributedOutcomes: attribution.directActions + attribution.correlatedOutcomes,
+  };
+
+  if (competitorContext) {
+    narrativeMetrics.competitorContext = competitorContext;
+  }
+
   const narrative = await generateDigestNarrative(
     { name: biz.name },
-    {
-      ...metrics,
-      ...actionsCompleted,
-      averageRating: reviewTrends.recentAverageRating,
-      totalReviews: reviewTrends.totalReviews,
-      newReviews: reviewTrends.recentReviews,
-      attributedOutcomes: attribution.directActions + attribution.correlatedOutcomes,
-    }
+    narrativeMetrics
   );
 
   // Store the digest
@@ -126,6 +151,7 @@ export async function generateDigest(
         metrics,
         actionsCompleted,
         reviewTrends,
+        competitorContext,
         periodStart: oneWeekAgo.toISOString(),
         periodEnd: now.toISOString(),
       },
@@ -144,6 +170,7 @@ export async function generateDigest(
     actionsCompleted,
     reviewTrends,
     attribution,
+    competitorContext,
     narrative,
   };
 }

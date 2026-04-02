@@ -128,6 +128,10 @@ export async function generateDigestNarrative(
   business: { name: string },
   metrics: Record<string, unknown>
 ): Promise<string> {
+  const competitorBlock = metrics.competitorContext
+    ? `\n\nCompetitor context: ${JSON.stringify(metrics.competitorContext)}\nInclude a brief competitor comparison in Act 1. Tone: motivating and proud — highlight wins ("you're rated higher than…", "you're gaining reviews faster"). Where the business is behind, frame it as an opportunity ("close the review gap") not a threat. Never anxiety-inducing.`
+    : "";
+
   return generate({
     prompt: `Generate a Weekly Digest for ${business.name}. Structure it in three acts:
 
@@ -135,7 +139,7 @@ Act 1 — "Here's what happened" (what the world did): Summarize the metrics in 
 Act 2 — "Here's what I did" (what LocalGenius did): List actions taken this week.
 Act 3 — "Here's what I recommend" (what to do next): One specific, actionable recommendation.
 
-Metrics this week: ${JSON.stringify(metrics)}
+Metrics this week: ${JSON.stringify(metrics)}${competitorBlock}
 
 Tone: warm, conversational, slightly proud of their business. Keep the entire digest under 200 words.`,
     model: "claude-haiku-4-5-20251001",

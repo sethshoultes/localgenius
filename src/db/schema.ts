@@ -595,3 +595,37 @@ export const scheduledPosts = pgTable(
     index("idx_scheduled_posts_pending").on(table.status, table.scheduledFor),
   ]
 );
+
+// ─── 16. Competitors ────────────────────────────────────────────────────────
+// Tracked competitors for each business. Stores current + previous snapshot
+// for delta calculation in Weekly Digest competitor comparisons.
+
+export const competitors = pgTable(
+  "competitors",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    businessId: uuid("business_id")
+      .notNull()
+      .references(() => businesses.id),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id),
+    competitorName: text("competitor_name").notNull(),
+    googlePlaceId: text("google_place_id"),
+    googleRating: numeric("google_rating"),
+    googleReviewCount: integer("google_review_count"),
+    lastRating: numeric("last_rating"),
+    lastReviewCount: integer("last_review_count"),
+    lastCheckedAt: timestamp("last_checked_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("idx_competitors_business").on(table.businessId),
+    uniqueIndex("idx_competitors_unique_place").on(
+      table.businessId,
+      table.googlePlaceId
+    ),
+  ]
+);

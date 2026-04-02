@@ -22,28 +22,30 @@ interface QuickActionsProps {
   visible?: boolean;
 }
 
-const ACTIONS: QuickAction[] = [
-  {
-    label: 'Post to social',
-    command: 'Post something about today\'s special',
-    icon: '📱',
-  },
-  {
-    label: 'Check reviews',
-    command: 'How are my reviews looking?',
-    icon: '⭐',
-  },
-  {
-    label: 'This week\'s digest',
-    command: 'Show me this week\'s digest',
-    icon: '📊',
-  },
-  {
-    label: 'How am I doing?',
-    command: 'How is my business doing this month?',
-    icon: '💬',
-  },
-];
+function getActions(): QuickAction[] {
+  return [
+    {
+      label: 'Post to social',
+      command: 'Create a social media post for this week',
+      icon: '📱',
+    },
+    {
+      label: 'Check reviews',
+      command: 'How are my reviews looking?',
+      icon: '⭐',
+    },
+    {
+      label: 'This week\'s digest',
+      command: 'Show me this week\'s digest',
+      icon: '📊',
+    },
+    {
+      label: 'How am I doing?',
+      command: 'How is my business doing this month?',
+      icon: '💬',
+    },
+  ];
+}
 
 export default function QuickActions({
   onSelect,
@@ -57,7 +59,7 @@ export default function QuickActions({
       role="toolbar"
       aria-label="Quick actions"
     >
-      {ACTIONS.map((action) => (
+      {getActions().map((action) => (
         <button
           key={action.label}
           onClick={() => onSelect(action.command)}

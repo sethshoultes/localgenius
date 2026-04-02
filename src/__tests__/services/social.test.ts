@@ -412,9 +412,12 @@ describe("createAndPublishPost", () => {
       [{ id: "action-uuid-001", status: "completed" }],
     );
 
+    // createAndPublishPost calls publishPost with text only (no imageUrl).
+    // In publishPost, instagram without imageUrl falls through to the facebook
+    // code path (instagram requires a public image URL). So we mock facebook here.
     mockGetMetaToken.mockResolvedValueOnce("meta_token_123");
-    mockPublishToInstagram.mockResolvedValueOnce({
-      id: "ig_post_001",
+    mockPublishToFacebook.mockResolvedValueOnce({
+      id: "fb_post_001",
       success: true,
     });
 
@@ -427,7 +430,7 @@ describe("createAndPublishPost", () => {
     );
 
     expect(result.published).toBe(true);
-    expect(result.postUrl).toContain("instagram.com/p/");
+    expect(result.postUrl).toContain("facebook.com/");
     expect(result.live).toBe(true);
   });
 

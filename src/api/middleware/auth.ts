@@ -29,21 +29,22 @@ const JWT_SECRET = new TextEncoder().encode(
 export async function verifyAuth(
   request: NextRequest
 ): Promise<AuthContext | NextResponse> {
+  // Check Authorization header first, then fall back to httpOnly session cookie
   const authHeader = request.headers.get("authorization");
+  const cookieToken = request.cookies.get("lg_session")?.value;
+  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : cookieToken;
 
-  if (!authHeader?.startsWith("Bearer ")) {
+  if (!token) {
     return NextResponse.json(
       {
         error: {
           code: "UNAUTHORIZED",
-          message: "Missing or invalid Authorization header",
+          message: "Missing authentication",
         },
       },
       { status: 401 }
     );
   }
-
-  const token = authHeader.slice(7);
 
   try {
     const { payload } = await jose.jwtVerify(token, JWT_SECRET);

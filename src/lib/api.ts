@@ -1,7 +1,8 @@
 /**
  * LocalGenius API Client
  * Typed fetch wrapper for all endpoints.
- * Handles auth token storage and SSE streaming for AI responses.
+ * Uses httpOnly session cookies for auth (set by /api/auth/login).
+ * Handles SSE streaming for AI responses.
  */
 
 const API_BASE = '/api';
@@ -128,24 +129,7 @@ export interface RevealData {
 }
 
 // ============================================================
-// Token management
-// ============================================================
-
-function getToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('lg_token');
-}
-
-function setToken(token: string): void {
-  localStorage.setItem('lg_token', token);
-}
-
-function clearToken(): void {
-  localStorage.removeItem('lg_token');
-}
-
-// ============================================================
-// Fetch wrapper
+// Fetch wrapper — cookie-based auth
 // ============================================================
 
 class ApiError extends Error {
@@ -161,24 +145,20 @@ async function request<T>(
   endpoint: string,
   options: RequestInit = {},
 ): Promise<T> {
-  const token = getToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   };
 
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
   const response = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
     headers,
+    credentials: 'include', // send httpOnly session cookie
   });
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({ error: 'Unknown error' }));
-    throw new ApiError(body.error || `Request failed: ${response.status}`, response.status);
+    throw new ApiError(body.error?.message || body.error || `Request failed: ${response.status}`, response.status);
   }
 
   return response.json();
@@ -189,26 +169,52 @@ async function uploadForm<T>(
   endpoint: string,
   formData: FormData,
 ): Promise<T> {
-  const token = getToken();
-  const headers: Record<string, string> = {};
-
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
   // Do NOT set Content-Type — browser sets multipart boundary automatically
   const response = await fetch(`${API_BASE}${endpoint}`, {
     method: 'POST',
-    headers,
     body: formData,
+    credentials: 'include',
   });
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({ error: 'Upload failed' }));
-    throw new ApiError(body.error || 'Upload failed', response.status);
+    throw new ApiError(body.error?.message || 'Upload failed', response.status);
   }
 
   return response.json();
+}
+
+// ============================================================
+// Normalize DB message → client Message type
+// DB stores: { role: "owner"|"assistant", content: { text: "..." }, contentType: "text"|"action_card" }
+// Client needs: { role: "user"|"assistant", content: "string", type: "text"|"approval" }
+// ============================================================
+
+interface DbMessage {
+  id: string;
+  conversationId: string;
+  role: string;
+  contentType: string;
+  content: { text?: string } | string;
+  aiModel?: string | null;
+  createdAt: string;
+  metadata?: Message['metadata'];
+}
+
+function normalizeMessage(msg: DbMessage): Message {
+  const content = typeof msg.content === 'string'
+    ? msg.content
+    : (msg.content as { text?: string })?.text || '';
+
+  return {
+    id: msg.id,
+    conversationId: msg.conversationId,
+    role: msg.role === 'owner' ? 'user' : 'assistant',
+    content,
+    type: msg.contentType === 'action_card' ? 'approval' : 'text',
+    metadata: msg.metadata,
+    createdAt: typeof msg.createdAt === 'string' ? msg.createdAt : new Date(msg.createdAt).toISOString(),
+  };
 }
 
 // ============================================================
@@ -222,7 +228,6 @@ export function streamMessage(
   onComplete: (message: Message) => void,
   onError: (error: Error) => void,
 ): () => void {
-  const token = getToken();
   const controller = new AbortController();
 
   (async () => {
@@ -234,10 +239,10 @@ export function streamMessage(
           headers: {
             'Content-Type': 'application/json',
             Accept: 'text/event-stream',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           body: JSON.stringify({ content, stream: true }),
           signal: controller.signal,
+          credentials: 'include',
         },
       );
 
@@ -265,7 +270,6 @@ export function streamMessage(
             const data = line.slice(6);
 
             if (data === '[DONE]') {
-              // Stream complete — parse the final message
               onComplete({
                 id: `msg-${Date.now()}`,
                 conversationId,
@@ -285,7 +289,7 @@ export function streamMessage(
               }
               // Handle structured messages (approval cards, etc.)
               if (parsed.message) {
-                onComplete(parsed.message);
+                onComplete(normalizeMessage(parsed.message));
                 return;
               }
             } catch {
@@ -301,7 +305,6 @@ export function streamMessage(
     }
   })();
 
-  // Return cancel function
   return () => controller.abort();
 }
 
@@ -309,39 +312,45 @@ export function streamMessage(
 // API functions
 // ============================================================
 
-// Auth
+// Auth (login/register/logout now handled by auth-client.ts with cookies)
+// These are kept for backward compatibility but prefer auth-client.ts
+
 export async function login(
   email: string,
   password: string,
 ): Promise<AuthResponse> {
-  const data = await request<AuthResponse>('/auth/login', {
+  const resp = await request<{ data: { user: AuthResponse['user']; accessToken: string } }>('/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
   });
-  setToken(data.token);
-  return data;
+  return { token: resp.data.accessToken, user: resp.data.user };
 }
 
 export async function register(
   data: RegisterData,
 ): Promise<AuthResponse> {
-  const result = await request<AuthResponse>('/auth/register', {
+  const resp = await request<{ data: { user: AuthResponse['user']; accessToken: string } }>('/auth/register', {
     method: 'POST',
     body: JSON.stringify(data),
   });
-  setToken(result.token);
-  return result;
+  return { token: resp.data.accessToken, user: resp.data.user };
 }
 
 export function logout(): void {
-  clearToken();
+  fetch(`${API_BASE}/auth/logout`, { method: 'POST', credentials: 'include' });
 }
 
-// Conversations
-export async function getConversation(
-  id: string,
-): Promise<Conversation> {
-  return request<Conversation>(`/conversations/${id}`);
+// Conversations — uses auth context to find the business's conversation
+export async function getConversation(): Promise<Conversation> {
+  const resp = await request<{ data: { conversation: { id: string; businessId: string; createdAt: string }; messages: DbMessage[] } }>('/conversations');
+  const conv = resp.data.conversation;
+  return {
+    id: conv.id,
+    businessId: conv.businessId,
+    messages: resp.data.messages.map(normalizeMessage),
+    createdAt: conv.createdAt,
+    updatedAt: conv.createdAt,
+  };
 }
 
 export async function createConversation(): Promise<Conversation> {
@@ -352,10 +361,11 @@ export async function sendMessage(
   conversationId: string,
   content: string,
 ): Promise<Message> {
-  return request<Message>(`/conversations/${conversationId}/messages`, {
-    method: 'POST',
-    body: JSON.stringify({ content }),
-  });
+  const resp = await request<{ data: { ownerMessage: DbMessage; assistantMessage: DbMessage } }>(
+    `/conversations/${conversationId}/messages`,
+    { method: 'POST', body: JSON.stringify({ content }) },
+  );
+  return normalizeMessage(resp.data.assistantMessage);
 }
 
 // Content
@@ -442,9 +452,22 @@ export async function generateReveal(
 }
 
 export async function completeOnboarding(
-  data: FormData,
+  data: {
+    businessName: string;
+    businessType: string;
+    city: string;
+    description: string;
+    priority: string;
+  },
 ): Promise<{ conversationId: string }> {
-  return uploadForm<{ conversationId: string }>('/onboarding', data);
+  // Complete onboarding via JSON — the API expects { step: "complete", data: {...} }
+  const resp = await request<{ data: { pipeline: { conversationId?: string } } }>('/onboarding', {
+    method: 'POST',
+    body: JSON.stringify({ step: 'complete', data }),
+  });
+  // The pipeline doesn't return conversationId directly — fetch it from GET /onboarding
+  const status = await request<{ data: { conversationId: string | null } }>('/onboarding');
+  return { conversationId: status.data.conversationId || '' };
 }
 
 // Website
@@ -471,4 +494,4 @@ export function getWebsitePreviewUrl(businessId: string): string {
   return `${API_BASE}/website/${businessId}`;
 }
 
-export { ApiError, getToken, clearToken };
+export { ApiError };

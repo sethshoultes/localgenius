@@ -82,13 +82,31 @@ export default function OnboardingPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const stepContainerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-detect city on mount
+  // Auto-detect city on mount via reverse geocoding
   useEffect(() => {
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
-        () => {
-          setState((s) => ({ ...s, city: 'Austin, TX' }));
-          setEditingCity(false);
+        async (position) => {
+          try {
+            const { latitude, longitude } = position.coords;
+            const res = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+            );
+            const data = await res.json();
+            const city =
+              data.address?.city ||
+              data.address?.town ||
+              data.address?.village ||
+              '';
+            const state = data.address?.state_code || data.address?.state || '';
+            const detected = city && state ? `${city}, ${state}` : city;
+            if (detected) {
+              setState((s) => ({ ...s, city: detected }));
+              setEditingCity(false);
+            }
+          } catch {
+            // Reverse geocoding failed — leave empty for manual entry
+          }
         },
         () => {
           // Geolocation denied — leave empty for manual entry
@@ -440,7 +458,10 @@ export default function OnboardingPage() {
 
                   <div className="mt-auto pt-4 flex flex-col gap-3">
                     <Button variant="primary" label="That's me" fullWidth onClick={() => goTo(3)} />
-                    <button className="text-caption text-terracotta text-center py-2">
+                    <button
+                      className="text-caption text-terracotta text-center py-2"
+                      onClick={() => goTo(1)}
+                    >
                       Something wrong? Edit details
                     </button>
                   </div>

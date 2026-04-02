@@ -48,6 +48,7 @@ export async function GET(request: NextRequest) {
       data: {
         user: { id: user.id, email: user.email, name: user.name },
         business: biz ? { id: biz.id, name: biz.name, vertical: biz.vertical } : null,
+        plan: (payload.plan as string) || 'base',
       },
     });
   } catch {

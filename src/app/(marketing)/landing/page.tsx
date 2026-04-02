@@ -18,12 +18,12 @@ export default function LandingPage() {
        * NAV
        * ============================================================ */}
       <nav className="px-screen-margin py-4 flex items-center justify-between max-w-[1120px] mx-auto">
-        <div className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2 no-underline">
           <div className="w-8 h-8 bg-terracotta rounded-md flex items-center justify-center">
             <span className="text-white font-semibold text-body">L</span>
           </div>
           <span className="text-h2 text-charcoal">LocalGenius</span>
-        </div>
+        </Link>
         <div className="flex items-center gap-4">
           <Link href="/pricing" className="text-body text-slate hover:text-charcoal transition-colors no-underline hidden sm:inline">
             Pricing

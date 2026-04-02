@@ -25,6 +25,7 @@ interface Business {
 interface AuthState {
   user: User | null;
   business: Business | null;
+  plan: 'base' | 'pro' | 'franchise' | null;
   isLoading: boolean;
   isAuthenticated: boolean;
 }
@@ -118,7 +119,7 @@ async function logoutRequest(): Promise<void> {
 /**
  * Fetch current session from server.
  */
-async function fetchSession(): Promise<{ user: User; business: Business } | null> {
+async function fetchSession(): Promise<{ user: User; business: Business; plan: string } | null> {
   try {
     const res = await fetch('/api/auth/session', {
       credentials: 'include',
@@ -145,6 +146,7 @@ export function useAuth() {
   const [state, setState] = useState<AuthState>({
     user: null,
     business: null,
+    plan: null,
     isLoading: true,
     isAuthenticated: false,
   });
@@ -164,6 +166,7 @@ export function useAuth() {
         setState({
           user: session.user,
           business: session.business,
+          plan: (session.plan as 'base' | 'pro' | 'franchise') || 'base',
           isLoading: false,
           isAuthenticated: true,
         });
@@ -174,6 +177,7 @@ export function useAuth() {
         setState({
           user: null,
           business: null,
+          plan: null,
           isLoading: false,
           isAuthenticated: false,
         });
@@ -215,6 +219,7 @@ export function useAuth() {
     setState({
       user: null,
       business: null,
+      plan: null,
       isLoading: false,
       isAuthenticated: false,
     });
@@ -224,6 +229,7 @@ export function useAuth() {
   return {
     user: state.user,
     business: state.business,
+    plan: state.plan,
     isLoading: state.isLoading,
     isAuthenticated: state.isAuthenticated,
     logout,

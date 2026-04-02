@@ -42,23 +42,7 @@ function Dash() {
 
 export default function PricingPage() {
   return (
-    <div className="min-h-screen bg-warm-white">
-      {/* Nav */}
-      <nav className="px-screen-margin py-4 flex items-center justify-between max-w-[1120px] mx-auto">
-        <Link href="/landing" className="flex items-center gap-2 no-underline">
-          <div className="w-8 h-8 bg-terracotta rounded-md flex items-center justify-center">
-            <span className="text-white font-semibold text-body">L</span>
-          </div>
-          <span className="text-h2 text-charcoal">LocalGenius</span>
-        </Link>
-        <Link
-          href="/welcome"
-          className="inline-flex items-center justify-center min-h-tap-min px-5 bg-terracotta text-white font-semibold rounded-sm hover:bg-terracotta-hover transition-colors no-underline text-caption"
-        >
-          Get started
-        </Link>
-      </nav>
-
+    <>
       {/* Header */}
       <section className="px-screen-margin pt-12 pb-8 text-center max-w-[720px] mx-auto">
         <h1 className="text-[2rem] leading-[1.15] font-semibold text-charcoal tracking-tight sm:text-[2.5rem]">
@@ -217,16 +201,6 @@ export default function PricingPage() {
         </Link>
       </section>
 
-      {/* Footer */}
-      <footer className="px-screen-margin py-6 border-t text-center" style={{ borderColor: 'var(--border-subtle)' }}>
-        <div className="flex items-center justify-center gap-2">
-          <div className="w-5 h-5 bg-terracotta rounded-sm flex items-center justify-center">
-            <span className="text-white font-semibold text-small">L</span>
-          </div>
-          <span className="text-caption text-charcoal font-semibold">LocalGenius</span>
-          <span className="text-caption text-slate">· Austin, TX · Your business, handled.</span>
-        </div>
-      </footer>
-    </div>
+    </>
   );
 }

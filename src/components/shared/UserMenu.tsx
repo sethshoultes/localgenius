@@ -9,7 +9,7 @@ import { useAuth } from '@/lib/auth-client';
  * No settings page — this is the lightest touch of account management.
  */
 export default function UserMenu() {
-  const { user, business, logout } = useAuth();
+  const { user, business, plan, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -68,9 +68,11 @@ export default function UserMenu() {
             <p className="text-caption text-slate">
               {user?.email || ''}
             </p>
-            <span className="inline-block mt-1.5 px-2 py-0.5 bg-terracotta-light text-terracotta-text text-small font-semibold rounded-sm">
-              Pro Plan
-            </span>
+            {plan && (
+              <span className="inline-block mt-1.5 px-2 py-0.5 bg-terracotta-light text-terracotta-text text-small font-semibold rounded-sm capitalize">
+                {plan === 'franchise' ? 'Franchise' : plan === 'pro' ? 'Pro Plan' : 'Base Plan'}
+              </span>
+            )}
           </div>
 
           {/* Menu items */}

@@ -53,7 +53,6 @@ export async function GET() {
     data: {
       status: overall,
       version: "0.1.0",
-      timestamp: new Date().toISOString(),
       database: dbStatus,
       ai: aiStatus,
       integrations: {
@@ -66,5 +65,6 @@ export async function GET() {
       },
       monitoring: services.monitoring,
     },
+    meta: { timestamp: new Date().toISOString() },
   });
 }

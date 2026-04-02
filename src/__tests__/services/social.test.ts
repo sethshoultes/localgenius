@@ -215,6 +215,9 @@ describe("publishPost", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     resetAllCounters();
+    mockGetMetaToken.mockReset();
+    mockPublishToFacebook.mockReset();
+    mockPublishToInstagram.mockReset();
 
     const mod = await import("@/services/social");
     publishPost = mod.publishPost;
@@ -359,6 +362,10 @@ describe("createAndPublishPost", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     resetAllCounters();
+    mockGetMetaToken.mockReset();
+    mockPublishToFacebook.mockReset();
+    mockPublishToInstagram.mockReset();
+    mockGenerateSocialPost.mockReset();
 
     const mod = await import("@/services/social");
     createAndPublishPost = mod.createAndPublishPost;
@@ -471,9 +478,11 @@ describe("createAndPublishPost", () => {
       [{ id: "action-uuid-001" }],
     );
 
+    // createAndPublishPost calls publishPost with text only (no imageUrl).
+    // Instagram without imageUrl falls to facebook code path in publishPost.
     mockGetMetaToken.mockResolvedValueOnce("meta_token_123");
-    mockPublishToInstagram.mockResolvedValueOnce({
-      id: "ig_post_002",
+    mockPublishToFacebook.mockResolvedValueOnce({
+      id: "fb_post_002",
       success: true,
     });
 
@@ -602,6 +611,10 @@ describe("Social service — edge cases", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     resetAllCounters();
+    // Reset Meta mocks to clear any leftover mockResolvedValueOnce stacks
+    mockGetMetaToken.mockReset();
+    mockPublishToFacebook.mockReset();
+    mockPublishToInstagram.mockReset();
 
     const mod = await import("@/services/social");
     publishPost = mod.publishPost;

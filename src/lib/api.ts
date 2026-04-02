@@ -19,9 +19,11 @@ export interface AuthResponse {
 export interface RegisterData {
   email: string;
   password: string;
+  name: string;
   businessName: string;
   businessType: string;
   city: string;
+  state: string;
 }
 
 export interface Message {

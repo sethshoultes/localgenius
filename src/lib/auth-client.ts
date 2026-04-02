@@ -205,6 +205,7 @@ export function useAuth() {
         setState({
           user: null,
           business: null,
+          plan: null,
           isLoading: false,
           isAuthenticated: false,
         });

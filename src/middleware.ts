@@ -19,7 +19,7 @@ const COOKIE_NAME = "lg_session";
 // ─── Route Classification ─────────────────────────────────────────────────────
 
 // Public pages — no auth required
-const PUBLIC_PAGES = ["/", "/about", "/pricing", "/login", "/register", "/landing", "/welcome"];
+const PUBLIC_PAGES = ["/", "/about", "/pricing", "/login", "/register", "/landing", "/welcome", "/forgot-password", "/reset-password"];
 
 // Public API routes — no auth required
 const PUBLIC_API_ROUTES = [
@@ -29,6 +29,8 @@ const PUBLIC_API_ROUTES = [
   "/api/auth/refresh",
   "/api/auth/logout",
   "/api/auth/session",
+  "/api/auth/forgot-password",
+  "/api/auth/reset-password",
 ];
 
 // Webhook routes — authenticated via signatures, not JWT

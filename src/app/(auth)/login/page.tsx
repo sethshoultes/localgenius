@@ -97,6 +97,15 @@ export default function LoginPage() {
               <p className="text-body text-error" role="alert">{error}</p>
             )}
 
+            <div className="flex justify-end">
+              <Link
+                href="/forgot-password"
+                className="text-caption text-slate hover:text-terracotta-text no-underline transition-colors"
+              >
+                Forgot password?
+              </Link>
+            </div>
+
             <Button
               variant="primary"
               label="Sign in"

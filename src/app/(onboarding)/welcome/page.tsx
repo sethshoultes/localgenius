@@ -364,7 +364,7 @@ export default function OnboardingPage() {
               </div>
 
               {validationError && (
-                <p className="text-body text-terracotta">{validationError}</p>
+                <p className="text-body text-error">{validationError}</p>
               )}
 
               <div className="mt-auto pt-4">
@@ -540,7 +540,7 @@ export default function OnboardingPage() {
               </p>
 
               {validationError && (
-                <p className="text-body text-terracotta">{validationError}</p>
+                <p className="text-body text-error">{validationError}</p>
               )}
 
               <div className="mt-auto pt-4">

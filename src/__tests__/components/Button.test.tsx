@@ -17,7 +17,7 @@ describe('Button', () => {
   it('renders secondary variant with correct classes', () => {
     render(<Button label="Secondary" variant="secondary" />);
     const btn = screen.getByRole('button');
-    expect(btn.className).toContain('text-terracotta');
+    expect(btn.className).toContain('text-sage-text');
     expect(btn.className).toContain('border');
   });
 

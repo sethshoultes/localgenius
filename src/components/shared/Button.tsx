@@ -18,7 +18,7 @@ const variantStyles: Record<ButtonVariant, string> = {
   primary:
     'bg-terracotta text-white hover:bg-terracotta-hover active:bg-terracotta-active',
   secondary:
-    'bg-transparent text-terracotta border border-charcoal/12 hover:bg-terracotta-light',
+    'bg-transparent text-sage-text border border-charcoal/12 hover:bg-sage-light',
   ghost:
     'bg-transparent text-terracotta hover:bg-terracotta-light',
   danger:

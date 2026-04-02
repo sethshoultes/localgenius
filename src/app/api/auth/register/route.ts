@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       issueRefreshToken(user.id),
     ]);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       data: {
         user: { id: user.id, email: user.email, name: user.name },
         business: { id: biz.id, name: biz.name, vertical: biz.vertical },
@@ -66,6 +66,17 @@ export async function POST(request: NextRequest) {
       },
       meta: { timestamp: new Date().toISOString() },
     }, { status: 201 });
+
+    // Set httpOnly session cookie
+    response.cookies.set("lg_session", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 15 * 60,
+    });
+
+    return response;
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: { code: "VALIDATION_ERROR", message: "Invalid registration data", details: error.errors } }, { status: 400 });

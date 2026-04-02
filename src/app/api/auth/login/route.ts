@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       issueRefreshToken(user.id),
     ]);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       data: {
         user: { id: user.id, email: user.email, name: user.name },
         business: biz ? { id: biz.id, name: biz.name } : null,
@@ -47,6 +47,17 @@ export async function POST(request: NextRequest) {
       },
       meta: { timestamp: new Date().toISOString() },
     });
+
+    // Set httpOnly session cookie
+    response.cookies.set("lg_session", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 15 * 60, // 15 minutes
+    });
+
+    return response;
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: { code: "VALIDATION_ERROR", message: "Invalid login data", details: error.errors } }, { status: 400 });

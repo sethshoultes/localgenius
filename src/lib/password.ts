@@ -2,6 +2,8 @@
  * Password hashing using Web Crypto API (no bcrypt dependency needed in edge runtime).
  */
 
+import { timingSafeEqual } from "crypto";
+
 const ITERATIONS = 100000;
 const HASH_LENGTH = 64;
 
@@ -46,5 +48,13 @@ export async function verifyPassword(
     HASH_LENGTH * 8
   );
   const hashHex = Buffer.from(hash).toString("hex");
-  return hashHex === storedHashHex;
+  // Timing-safe comparison to prevent timing attacks
+  try {
+    return timingSafeEqual(
+      Buffer.from(hashHex, "hex"),
+      Buffer.from(storedHashHex, "hex")
+    );
+  } catch {
+    return false;
+  }
 }

@@ -23,10 +23,10 @@ export default function MarketingLayout({
 
         <div className="flex items-center gap-5">
           <Link
-            href="/sites"
+            href="/about"
             className="text-body text-slate hover:text-charcoal transition-colors no-underline hidden sm:inline"
           >
-            Examples
+            About
           </Link>
           <Link
             href="/pricing"
@@ -35,10 +35,10 @@ export default function MarketingLayout({
             Pricing
           </Link>
           <Link
-            href="/about"
+            href="/sites"
             className="text-body text-slate hover:text-charcoal transition-colors no-underline hidden sm:inline"
           >
-            About
+            Sites
           </Link>
           <Link
             href="/login"

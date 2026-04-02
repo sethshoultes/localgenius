@@ -25,11 +25,14 @@ export default function LandingPage() {
           <span className="text-h2 text-charcoal">LocalGenius</span>
         </Link>
         <div className="flex items-center gap-4">
-          <Link href="/sites" className="text-body text-slate hover:text-charcoal transition-colors no-underline hidden sm:inline">
-            Examples
+          <Link href="/about" className="text-body text-slate hover:text-charcoal transition-colors no-underline hidden sm:inline">
+            About
           </Link>
           <Link href="/pricing" className="text-body text-slate hover:text-charcoal transition-colors no-underline hidden sm:inline">
             Pricing
+          </Link>
+          <Link href="/sites" className="text-body text-slate hover:text-charcoal transition-colors no-underline hidden sm:inline">
+            Sites
           </Link>
           <Link href="/login" className="text-body text-slate hover:text-charcoal transition-colors no-underline hidden sm:inline">
             Sign in
@@ -79,7 +82,7 @@ export default function LandingPage() {
             </div>
 
             <p className="text-caption text-slate mt-6">
-              Trusted by 500 Austin restaurants · No credit card required
+              No credit card required · Set up in 5 minutes
             </p>
           </div>
 
@@ -208,8 +211,7 @@ export default function LandingPage() {
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                 </svg>
               </div>
-              <span className="text-display text-charcoal">12,400+</span>
-              <span className="text-h2 text-charcoal mt-1">Reviews handled</span>
+              <span className="text-h2 text-charcoal font-semibold">Reviews handled</span>
               <p className="text-body text-slate mt-3">
                 A 2-star review at 10pm used to ruin your night. Now it gets a thoughtful response before you wake up.
               </p>
@@ -222,8 +224,7 @@ export default function LandingPage() {
                   <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" x2="12" y1="2" y2="15" />
                 </svg>
               </div>
-              <span className="text-display text-charcoal">8,200+</span>
-              <span className="text-h2 text-charcoal mt-1">Posts created</span>
+              <span className="text-h2 text-charcoal font-semibold">Posts created</span>
               <p className="text-body text-slate mt-3">
                 &ldquo;Post something about our lunch special.&rdquo; That&apos;s all it takes. Copy, photo, scheduling — handled.
               </p>
@@ -236,8 +237,7 @@ export default function LandingPage() {
                   <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" /><polyline points="16 7 22 7 22 13" />
                 </svg>
               </div>
-              <span className="text-display text-charcoal">2,100+</span>
-              <span className="text-h2 text-charcoal mt-1">Digests delivered</span>
+              <span className="text-h2 text-charcoal font-semibold">Weekly digests</span>
               <p className="text-body text-slate mt-3">
                 Every Monday at 7am. 90 seconds. What happened, what I did, what I recommend. No dashboards.
               </p>
@@ -294,12 +294,19 @@ export default function LandingPage() {
        * ============================================================ */}
       <section className="px-screen-margin py-16 bg-cream">
         <div className="max-w-[720px] mx-auto text-center">
-          <p className="text-display text-charcoal">500+</p>
-          <p className="text-h2 text-charcoal mt-1">Austin restaurants trust LocalGenius</p>
+          <p className="text-h1 text-charcoal font-semibold">See what we build.</p>
           <p className="text-body text-slate mt-4 max-w-[480px] mx-auto">
-            80% are still here after 30 days — in a market where the average churn is 5-10% per month.
-            They stay because every Monday, the Weekly Digest proves it&apos;s working.
+            Every LocalGenius business gets a professional website, built by AI in five minutes.
+            Real content. Real design. No templates to choose. No copy to write.
           </p>
+          <div className="mt-6">
+            <Link
+              href="/sites"
+              className="inline-flex items-center justify-center min-h-tap-min px-6 bg-terracotta text-white font-semibold rounded-sm hover:bg-terracotta-hover transition-colors no-underline text-body"
+            >
+              View example sites
+            </Link>
+          </div>
         </div>
       </section>
 

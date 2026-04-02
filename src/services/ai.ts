@@ -164,18 +164,23 @@ export async function generateDigestNarrative(
     ? `\n\nSEO score: ${JSON.stringify(metrics.seoScore)}\nUse this in "Your SEO Health". Show the score and grade (e.g., "72/100, grade B"). Mention the top recommendation. If the score improved from last week, celebrate it.`
     : "\n\nNo SEO data available — skip the 'Your SEO Health' section or note that the first SEO audit is coming soon.";
 
+  const roiBlock = metrics.roiSummary
+    ? `\n\nROI Summary: ${JSON.stringify(metrics.roiSummary)}\nLead with the headline (e.g., "I saved you 4.2 hours this week"). Show specific numbers: posts published, reviews responded, hours saved. If there's estimated dollar value, mention it ("drove an estimated $X in bookings"). This section is the #1 retention driver — make Maria feel the value.`
+    : "";
+
   return generate({
-    prompt: `Generate a Weekly Digest for ${business.name}. Structure it in five sections:
+    prompt: `Generate a Weekly Digest for ${business.name}. Structure it in six sections:
 
-1. "What Happened" (what the world did): Summarize metrics — reviews, visits, calls, bookings. Never a number without context.
-2. "What I Did" (what LocalGenius did): Actions completed — posts published, reviews responded, emails sent.
-3. "How You Compare" (competitor comparison): Compare review counts, ratings, and momentum vs competitors.
-4. "Your SEO Health" (SEO score): Show the score, grade, and top recommendation.
-5. "What I Recommend" (what to do next): One specific, actionable recommendation informed by competitor and SEO data.
+1. "Your Week at a Glance" (ROI headline): Lead with time saved and actions completed. "${(metrics.roiSummary as Record<string, unknown>)?.headline || 'Here is what happened this week.'}". Show specific numbers.
+2. "What Happened" (what the world did): Summarize metrics — reviews, visits, calls, bookings. Never a number without context.
+3. "What I Did" (what LocalGenius did): Actions completed — posts published, reviews responded, emails sent. Frame as "I did this so you didn't have to."
+4. "How You Compare" (competitor comparison): Compare review counts, ratings, and momentum vs competitors.
+5. "Your SEO Health" (SEO score): Show the score and grade. Mention the top recommendation.
+6. "What I Recommend" (what to do next): One specific, actionable recommendation.
 
-Metrics this week: ${JSON.stringify(metrics)}${competitorBlock}${seoBlock}
+Metrics this week: ${JSON.stringify(metrics)}${competitorBlock}${seoBlock}${roiBlock}
 
-Tone: warm, conversational, slightly proud of their business. Keep the entire digest under 300 words.`,
+Tone: warm, conversational, slightly proud of their business. Keep the entire digest under 350 words.`,
     model: "claude-haiku-4-5-20251001",
     maxTokens: 768,
   });

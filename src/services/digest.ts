@@ -35,6 +35,16 @@ interface DigestData {
   attribution: Record<string, number>;
   competitorContext: Record<string, unknown> | null;
   seoScore: { overall: number; grade: string; topRecommendation: string } | null;
+  roiSummary: {
+    timeSavedMinutes: number;
+    timeSavedHours: number;
+    actionsCompleted: number;
+    reviewsResponded: number;
+    postsPublished: number;
+    ratingChange: number;
+    estimatedValueDollars: number;
+    headline: string;
+  };
   narrative: string;
 }
 
@@ -119,7 +129,40 @@ export async function generateDigest(
     // SEO audit is non-critical — digest still generates without it
   }
 
-  // Generate the narrative using AI (now includes competitor + SEO context)
+  // ─── ROI Metrics (Jensen #3) ──────────────────────────────────────────────
+  // Estimate time saved based on actions completed.
+  // Industry averages: social post = 25 min, review response = 10 min,
+  // email campaign = 45 min, SEO audit = 60 min, GBP update = 15 min.
+  const TIME_PER_ACTION_MINUTES: Record<string, number> = {
+    socialPosts: 25,
+    reviewResponses: 10,
+    emailCampaigns: 45,
+    seoUpdates: 60,
+    gbpUpdates: 15,
+  };
+
+  const timeSavedMinutes = Object.entries(TIME_PER_ACTION_MINUTES).reduce(
+    (total, [key, minutes]) => total + (actionsCompleted[key as keyof typeof actionsCompleted] as number || 0) * minutes,
+    0
+  );
+
+  const timeSavedHours = Math.round(timeSavedMinutes / 60 * 10) / 10;
+  const estimatedValueCents = attribution.estimatedValueCents || 0;
+
+  const roiSummary = {
+    timeSavedMinutes,
+    timeSavedHours,
+    actionsCompleted: actionsCompleted.total,
+    reviewsResponded: actionsCompleted.reviewResponses,
+    postsPublished: actionsCompleted.socialPosts,
+    ratingChange: reviewTrends.ratingTrend || 0,
+    estimatedValueDollars: Math.round(estimatedValueCents / 100),
+    headline: timeSavedHours >= 1
+      ? `LocalGenius saved you ${timeSavedHours} hours this week`
+      : `LocalGenius handled ${actionsCompleted.total} tasks for you this week`,
+  };
+
+  // Generate the narrative using AI (now includes competitor + SEO + ROI context)
   const narrativeMetrics: Record<string, unknown> = {
     ...metrics,
     ...actionsCompleted,
@@ -127,6 +170,7 @@ export async function generateDigest(
     totalReviews: reviewTrends.totalReviews,
     newReviews: reviewTrends.recentReviews,
     attributedOutcomes: attribution.directActions + attribution.correlatedOutcomes,
+    roiSummary,
   };
 
   if (competitorContext) {
@@ -151,7 +195,7 @@ export async function generateDigest(
     periodEnd: now,
     metrics,
     actionsCompleted,
-    recommendations: { narrative, seoScore, competitorContext },
+    recommendations: { narrative, seoScore, competitorContext, roiSummary },
   });
 
   // Also store as a message in the conversation thread
@@ -175,6 +219,7 @@ export async function generateDigest(
         reviewTrends,
         competitorContext,
         seoScore,
+        roiSummary,
         periodStart: oneWeekAgo.toISOString(),
         periodEnd: now.toISOString(),
       },
@@ -195,6 +240,7 @@ export async function generateDigest(
     attribution,
     competitorContext,
     seoScore,
+    roiSummary,
     narrative,
   };
 }

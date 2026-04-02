@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { businesses, conversations } from "@/db/schema";
+import { businesses, conversations, businessSettings } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { verifyAuth } from "@/api/middleware/auth";
+import { runOnboardingPipeline } from "@/services/onboarding-pipeline";
 
 const updateSchema = z.object({
   step: z.enum(["confirm", "photos", "priority", "complete"]),
@@ -32,7 +33,48 @@ export async function POST(request: NextRequest) {
       }
       case "complete": {
         await db.update(businesses).set({ onboardingCompletedAt: new Date(), updatedAt: new Date() }).where(where);
-        break;
+
+        // Load business data for the pipeline
+        const [biz] = await db.select().from(businesses).where(where).limit(1);
+
+        // Check if Google is connected
+        const [googleConn] = await db.select().from(businessSettings)
+          .where(and(eq(businessSettings.businessId, auth.businessId), eq(businessSettings.platform, "google_business"), eq(businessSettings.connectionStatus, "active")))
+          .limit(1);
+
+        // Fire the onboarding pipeline — website, welcome, posts, digest, SEO
+        const pipelineResult = await runOnboardingPipeline({
+          businessId: auth.businessId,
+          organizationId: auth.organizationId,
+          userId: auth.userId,
+          businessName: biz?.name || "",
+          vertical: biz?.vertical || "restaurant",
+          city: biz?.city || "",
+          state: biz?.state || "",
+          address: biz?.address,
+          phone: biz?.phone,
+          photos: (validated.data as { photos?: string[] })?.photos,
+          priorityFocus: biz?.priorityFocus,
+          hasGoogleConnection: !!googleConn,
+        });
+
+        return NextResponse.json({
+          data: {
+            step: "complete",
+            status: "completed",
+            pipeline: {
+              websiteGenerated: pipelineResult.websiteGenerated,
+              welcomeMessageSent: pipelineResult.welcomeMessageSent,
+              postsGenerated: pipelineResult.postsGenerated,
+              reviewsSynced: pipelineResult.reviewsSynced,
+              digestScheduled: pipelineResult.digestScheduled,
+              seoScore: pipelineResult.seoScore,
+              completedSteps: pipelineResult.completedSteps,
+              totalSteps: pipelineResult.totalSteps,
+            },
+          },
+          meta: { timestamp: new Date().toISOString() },
+        });
       }
     }
 

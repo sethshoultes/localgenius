@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Button from '@/components/shared/Button';
 import { tapCelebrate, tapSelect } from '@/lib/haptics';
 import { useAuth } from '@/lib/auth-client';
@@ -265,6 +266,19 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-warm-white flex flex-col">
+      {/* Header */}
+      <div className="px-screen-margin py-4 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2 no-underline">
+          <div className="w-8 h-8 bg-terracotta rounded-md flex items-center justify-center">
+            <span className="text-white font-semibold text-body">L</span>
+          </div>
+          <span className="text-h2 text-charcoal">LocalGenius</span>
+        </Link>
+        <Link href="/login" className="text-caption text-slate hover:text-charcoal transition-colors no-underline">
+          Already have an account? Sign in
+        </Link>
+      </div>
+
       {/* Progress bar */}
       <div className="h-[3px] bg-cream w-full flex-shrink-0">
         <div

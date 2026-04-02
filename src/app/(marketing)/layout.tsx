@@ -35,10 +35,10 @@ export default function MarketingLayout({
             Pricing
           </Link>
           <Link
-            href="/demo"
+            href="/login"
             className="text-body text-slate hover:text-charcoal transition-colors no-underline hidden sm:inline"
           >
-            Try the demo
+            Sign in
           </Link>
           <Link
             href="/welcome"

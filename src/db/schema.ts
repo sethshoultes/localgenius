@@ -556,3 +556,42 @@ export const businessSettings = pgTable(
     index("idx_settings_status").on(table.connectionStatus),
   ]
 );
+
+// ─── 15. Scheduled Posts ──────────────────────────────────────────────────────
+// Posts scheduled for future publication. Executed by cron.
+// "Post about our Friday fish special on Thursday at 5pm."
+
+export const scheduledPostStatusEnum = pgEnum("scheduled_post_status", [
+  "pending",
+  "published",
+  "failed",
+  "cancelled",
+]);
+
+export const scheduledPosts = pgTable(
+  "scheduled_posts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    businessId: uuid("business_id")
+      .notNull()
+      .references(() => businesses.id),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id),
+    contentItemId: uuid("content_item_id").references(() => contentItems.id),
+    actionId: uuid("action_id").references(() => actions.id),
+    platform: text("platform").notNull(),
+    content: jsonb("content").notNull(),
+    scheduledFor: timestamp("scheduled_for", { withTimezone: true }).notNull(),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    status: scheduledPostStatusEnum("status").notNull().default("pending"),
+    errorDetails: jsonb("error_details"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("idx_scheduled_posts_business").on(table.businessId, table.scheduledFor),
+    index("idx_scheduled_posts_pending").on(table.status, table.scheduledFor),
+  ]
+);

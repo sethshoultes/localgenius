@@ -35,6 +35,12 @@ export default function MarketingLayout({
             Pricing
           </Link>
           <Link
+            href="/demo"
+            className="text-body text-slate hover:text-charcoal transition-colors no-underline hidden sm:inline"
+          >
+            Try the demo
+          </Link>
+          <Link
             href="/welcome"
             className="inline-flex items-center justify-center min-h-tap-min px-5 bg-terracotta text-white font-semibold rounded-sm hover:bg-terracotta-hover transition-colors no-underline text-caption"
           >

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import ConversationThread, { type ThreadMessage } from '@/components/conversation/ConversationThread';
+import QuickActions from '@/components/conversation/QuickActions';
 import Input from '@/components/shared/Input';
 import ErrorBanner from '@/components/shared/ErrorBanner';
 import { MessageSkeleton } from '@/components/shared/Skeleton';
@@ -236,8 +237,15 @@ export default function ThreadPage() {
         onSettingsSave={handleSettingsSave}
       />
 
-      {/* Spacer for fixed input bar */}
-      <div className="h-[68px] flex-shrink-0" />
+      {/* Quick actions + spacer for fixed input bar */}
+      <div className="h-[112px] flex-shrink-0" />
+
+      <QuickActions
+        onSelect={(command) => {
+          setInputValue(command);
+        }}
+        visible={!isLoading && messages.length > 0}
+      />
 
       <Input
         value={inputValue}

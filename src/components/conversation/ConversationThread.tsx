@@ -6,8 +6,10 @@ import ApprovalCard from './ApprovalCard';
 import SettingsCard from './SettingsCard';
 import PublishedCard from './PublishedCard';
 import ScheduledCard from './ScheduledCard';
+import InsightCard from './InsightCard';
+import ReviewAlertCard from './ReviewAlertCard';
 
-export type ThreadMessageType = 'user_message' | 'system_message' | 'approval_card' | 'report_card' | 'settings_card' | 'published_card' | 'scheduled_card';
+export type ThreadMessageType = 'user_message' | 'system_message' | 'approval_card' | 'report_card' | 'settings_card' | 'published_card' | 'scheduled_card' | 'insight_card' | 'review_alert_card';
 
 export interface ThreadMessage {
   id: string;
@@ -26,7 +28,12 @@ export interface ThreadMessage {
     postUrl?: string;
     scheduledTime?: string;
     reviewId?: string;
+    reviewerName?: string;
+    rating?: number;
+    reviewText?: string;
     draftResponse?: string;
+    insight?: string;
+    suggestion?: string;
     fields?: { key: string; label: string; value: string; type?: 'text' | 'tel' | 'url' | 'textarea'; placeholder?: string }[];
   };
 }
@@ -148,6 +155,39 @@ export default function ConversationThread({
             scheduledTime={msg.metadata?.scheduledTime ?? ''}
             platform={msg.metadata?.platform ?? 'instagram'}
             onCancel={() => {/* TODO: call cancel endpoint */}}
+            timestamp={msg.timestamp}
+          />
+        );
+
+      case 'insight_card':
+        return (
+          <InsightCard
+            key={msg.id}
+            insight={msg.metadata?.insight ?? msg.content}
+            suggestion={msg.metadata?.suggestion ?? ''}
+            onAccept={() => {/* TODO: act on insight */}}
+            onDismiss={() => {/* TODO: dismiss insight */}}
+            timestamp={msg.timestamp}
+          />
+        );
+
+      case 'review_alert_card':
+        return (
+          <ReviewAlertCard
+            key={msg.id}
+            reviewerName={msg.metadata?.reviewerName ?? 'Someone'}
+            rating={msg.metadata?.rating ?? 5}
+            reviewText={msg.content}
+            platform={(msg.metadata?.platform as 'google' | 'yelp') ?? 'google'}
+            draftResponse={msg.metadata?.draftResponse ?? ''}
+            onApproveResponse={(response) => {
+              if (msg.metadata?.reviewId) {
+                // TODO: call respondToReview
+              }
+            }}
+            onEditResponse={(response) => {
+              // TODO: open edit flow
+            }}
             timestamp={msg.timestamp}
           />
         );

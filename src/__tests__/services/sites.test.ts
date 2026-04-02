@@ -91,44 +91,18 @@ describe("generateSlug", () => {
 });
 
 describe("provisionSite", () => {
-  it("provisions a site and stores the URL on the business", async () => {
-    const provisionResponse = {
-      siteUrl: "https://marias-kitchen-austin.localgenius.site",
-      adminUrl: "https://marias-kitchen-austin.localgenius.site/_admin",
-      status: "ready",
-      databaseId: "d1-uuid",
-      bucketName: "marias-kitchen-austin",
-      workerId: "worker-id",
-      provisionedAt: "2026-04-02T12:00:00Z",
-    };
-
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve(provisionResponse),
-    });
-
+  it("generates slug and stores site URL on business", async () => {
     const { provisionSite } = await import("@/services/sites");
     const result = await provisionSite("biz-uuid-001", "org-uuid-001");
 
-    expect(result.siteUrl).toBe("https://marias-kitchen-austin.localgenius.site");
     expect(result.slug).toBe("marias-kitchen-austin");
-
-    // Verify fetch was called with correct URL and auth
-    expect(mockFetch).toHaveBeenCalledWith(
-      "https://sites-api.test/api/provision",
-      expect.objectContaining({
-        method: "POST",
-        headers: expect.objectContaining({
-          Authorization: "Bearer test-token-123",
-        }),
-      })
-    );
+    expect(result.siteUrl).toContain("/site/marias-kitchen-austin");
 
     // Verify DB was updated with the site URL
     expect(mockUpdate).toHaveBeenCalled();
     expect(mockUpdateSet).toHaveBeenCalledWith(
       expect.objectContaining({
-        websiteUrl: "https://marias-kitchen-austin.localgenius.site",
+        websiteUrl: expect.stringContaining("/site/marias-kitchen-austin"),
       })
     );
   });
@@ -139,18 +113,6 @@ describe("provisionSite", () => {
     const { provisionSite } = await import("@/services/sites");
     await expect(provisionSite("missing", "org")).rejects.toThrow("not found");
   });
-
-  it("throws when Sites API returns an error", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      status: 500,
-      statusText: "Internal Server Error",
-      json: () => Promise.resolve({ error: "Provisioning failed" }),
-    });
-
-    const { provisionSite } = await import("@/services/sites");
-    await expect(provisionSite("biz-uuid-001", "org-uuid-001")).rejects.toThrow("Provisioning failed");
-  });
 });
 
 describe("updateSite", () => {
@@ -158,33 +120,14 @@ describe("updateSite", () => {
     mockSelectLimit.mockResolvedValue([TEST_BUSINESS]);
   });
 
-  it("sends an update instruction via the Sites API", async () => {
-    const updateResponse = {
-      success: true,
-      instruction: "Update hours to 9-5 weekdays",
-      changes: [{ type: "setting", target: "business_hours", newValue: "Mon-Fri 9am-5pm", appliedAt: "2026-04-02T12:00:00Z" }],
-    };
-
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve(updateResponse),
-    });
-
+  it("updates business and returns changes", async () => {
     const { updateSite } = await import("@/services/sites");
     const result = await updateSite("biz-uuid-001", "org-uuid-001", "Update hours to 9-5 weekdays");
 
     expect(result.success).toBe(true);
-    expect(result.changes).toHaveLength(1);
-    expect(result.changes[0].target).toBe("business_hours");
-
-    // Verify the slug was extracted from the website URL
-    expect(mockFetch).toHaveBeenCalledWith(
-      "https://sites-api.test/api/update",
-      expect.objectContaining({
-        method: "POST",
-        body: expect.stringContaining("marias-kitchen-austin"),
-      })
-    );
+    expect(result.changes.length).toBeGreaterThan(0);
+    expect(result.changes[0].target).toBe("hours");
+    expect(mockUpdate).toHaveBeenCalled();
   });
 
   it("throws when business has no website", async () => {

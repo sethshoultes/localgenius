@@ -8,15 +8,12 @@ import ErrorBanner from '@/components/shared/ErrorBanner';
 import { MessageSkeleton } from '@/components/shared/Skeleton';
 import {
   getConversation,
-  createConversation,
   streamMessage,
   publishContent,
   sendMessage,
-  getToken,
   type Message,
   ApiError,
 } from '@/lib/api';
-import { getAllDemoMessages } from '@/lib/demo-conversation';
 
 function apiMessageToThread(msg: Message): ThreadMessage {
   return {
@@ -71,36 +68,24 @@ export default function ThreadPage() {
     let mounted = true;
 
     async function init() {
-      // Demo mode: load the rich demo conversation showcasing all card types
-      if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
-        if (mounted) {
-          setConversationId('demo');
-          setMessages(getAllDemoMessages());
-          setIsInitLoading(false);
-        }
-        return;
-      }
-
       try {
-        const savedId = localStorage.getItem('lg_conversation_id');
-        if (savedId) {
-          const conv = await getConversation(savedId);
-          if (mounted) {
-            setConversationId(conv.id);
-            setMessages(conv.messages.length > 0 ? conv.messages.map(apiMessageToThread) : [WELCOME_MESSAGE]);
-          }
-        } else {
-          const conv = await createConversation();
-          if (mounted) {
-            localStorage.setItem('lg_conversation_id', conv.id);
-            setConversationId(conv.id);
-            setMessages([WELCOME_MESSAGE]);
-          }
-        }
-      } catch {
+        const conv = await getConversation();
         if (mounted) {
-          setConversationId('local');
+          setConversationId(conv.id);
+          setMessages(
+            conv.messages.length > 0
+              ? conv.messages.map(apiMessageToThread)
+              : [WELCOME_MESSAGE],
+          );
+        }
+      } catch (err) {
+        if (mounted) {
+          // No conversation yet (new user) or network error — show welcome
+          setConversationId(null);
           setMessages([WELCOME_MESSAGE]);
+          if (err instanceof ApiError && err.status !== 404) {
+            setError('Could not load your conversation. Please refresh.');
+          }
         }
       } finally {
         if (mounted) setIsInitLoading(false);
@@ -200,12 +185,10 @@ export default function ThreadPage() {
   const handleSettingsSave = useCallback(
     async (values: Record<string, string>) => {
       try {
-        const token = getToken();
-        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-        if (token) headers['Authorization'] = `Bearer ${token}`;
         const res = await fetch('/api/onboarding', {
           method: 'POST',
-          headers,
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({ step: 'confirm', data: values }),
         });
         if (!res.ok) throw new Error('Request failed');

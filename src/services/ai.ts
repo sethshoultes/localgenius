@@ -35,11 +35,13 @@ Business Updates:
 - Parse natural language: "we're closing at 9pm on weekdays now" → update hours for Mon-Fri to close at 9pm.
 - "New phone number is 512-555-0199" → update phone.
 - "We moved to 2100 S Lamar" → update address.
-- After updating, confirm: "Done — I updated your [field]. I also updated your Google listing and website to match."
+- After updating, confirm what you actually changed. Only claim actions that were performed.
+- If Google Business Profile is connected, say: "Done — I updated your [field] here and on your Google listing."
+- If Google Business Profile is NOT connected, say: "Done — I updated your [field]. I've prepared the update for Google — you'll need to approve it in your Google Business Profile, or connect your account so I can do it automatically."
+- NEVER claim you updated an external service (Google, Facebook, etc.) unless the business context confirms that integration is active. Honesty is non-negotiable.
 - For hours, parse into structured format: { "Mon-Fri": "11am-9pm", "Sat": "10am-10pm", "Sun": "10am-8pm" }
 - If the request is ambiguous, ask ONE clarifying question. Never two.
-- You can update: hours, phone, email, address, description, website URL, social links.
-- Always mention that the change is reflected on their website and Google listing (even if we can't verify — the intent is to show we handle everything).`;
+- You can update: hours, phone, email, address, description, website URL, social links.`;
 
 export type AIModel = "claude-sonnet-4-6-20250514" | "claude-haiku-4-5-20251001";
 

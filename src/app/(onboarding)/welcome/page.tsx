@@ -12,7 +12,6 @@ import {
   completeOnboarding,
   type DiscoveryResult,
   type RevealData,
-  type GeneratedWebsite,
 } from '@/lib/api';
 
 type Step = 1 | 2 | 3 | 4 | 5;
@@ -47,37 +46,6 @@ const PRIORITIES: { id: Priority; icon: string; label: string; sublabel: string 
   { id: 'social', icon: '📱', label: 'Stay active on social', sublabel: 'I need to post more consistently' },
 ];
 
-// Mock discovery result for demo/offline mode
-const MOCK_DISCOVERY: DiscoveryResult = {
-  businessName: '',
-  address: '1401 S Lamar Blvd, Austin, TX 78704',
-  googleRating: 4.3,
-  reviewCount: 28,
-  yelpStatus: 'Not found on Yelp',
-  photoCount: 3,
-  instagramStatus: 'No Instagram',
-  websiteStatus: 'No website found',
-  competitors: [
-    { name: 'Torchy\'s Tacos', rating: 4.5, reviewCount: 847 },
-    { name: 'Veracruz All Natural', rating: 4.7, reviewCount: 623 },
-    { name: 'El Primo', rating: 4.2, reviewCount: 156 },
-  ],
-};
-
-const MOCK_REVEAL: RevealData = {
-  websitePreviewUrl: '',
-  businessDescription: 'Authentic Tex-Mex made from scratch daily on South Lamar. Family recipes, local ingredients, and the kind of hospitality that keeps regulars coming back every week.',
-  tagline: 'Real Tex-Mex. Real people. Since 2019.',
-  socialPostDraft: 'Nothing beats a slow Tuesday with fresh guacamole and good company. Come see us on South Lamar — your table is ready. 🌮',
-  socialPostImageUrl: '',
-  googleOptimizations: [
-    'Updated business description with local keywords',
-    'Added hours and holiday schedule',
-    'Drafted response for latest review',
-  ],
-  suggestedCampaign: 'Ask your 5 most recent customers for a Google review',
-};
-
 export default function OnboardingPage() {
   const router = useRouter();
   const { business, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -85,7 +53,6 @@ export default function OnboardingPage() {
   // Guard: redirect already-onboarded users to the app
   useEffect(() => {
     if (!authLoading && isAuthenticated && business?.vertical) {
-      // business.vertical is set during onboarding — if it exists, they're done
       router.replace('/app');
     }
   }, [authLoading, isAuthenticated, business, router]);
@@ -109,6 +76,7 @@ export default function OnboardingPage() {
   const [publishedAll, setPublishedAll] = useState(false);
   const [websiteHtml, setWebsiteHtml] = useState<string | null>(null);
   const [websitePreviewUrl, setWebsitePreviewUrl] = useState<string | null>(null);
+  const [discoveryError, setDiscoveryError] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const stepContainerRef = useRef<HTMLDivElement>(null);
@@ -118,7 +86,6 @@ export default function OnboardingPage() {
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         () => {
-          // In production: reverse geocode coordinates to city name
           setState((s) => ({ ...s, city: 'Austin, TX' }));
         },
         () => {
@@ -140,7 +107,7 @@ export default function OnboardingPage() {
     setStep(s);
   };
 
-  // Step 1 → Step 2: Discover business
+  // Step 1 -> Step 2: Discover business
   const handleStep1Continue = async () => {
     if (!state.businessName.trim()) {
       setValidationError("What's your business called?");
@@ -152,16 +119,28 @@ export default function OnboardingPage() {
     }
 
     setIsDiscovering(true);
+    setDiscoveryError(false);
     goTo(2);
 
     try {
       const result = await discoverBusiness(state.businessName, state.city || 'Austin, TX');
       setState((s) => ({ ...s, discovery: { ...result, businessName: s.businessName } }));
     } catch {
-      // Offline/error: use mock data
+      // Discovery is best-effort — show what we know and let them proceed
+      setDiscoveryError(true);
       setState((s) => ({
         ...s,
-        discovery: { ...MOCK_DISCOVERY, businessName: s.businessName },
+        discovery: {
+          businessName: s.businessName,
+          address: '',
+          googleRating: null,
+          reviewCount: 0,
+          yelpStatus: 'Unknown',
+          photoCount: 0,
+          instagramStatus: 'Unknown',
+          websiteStatus: 'Unknown',
+          competitors: [],
+        },
       }));
     } finally {
       setIsDiscovering(false);
@@ -193,7 +172,7 @@ export default function OnboardingPage() {
     }));
   };
 
-  // Step 3 → Step 4: Generate reveal
+  // Step 3 -> Step 4: Generate reveal
   const handleStep3Continue = async () => {
     if (state.photos.length < 3) {
       setValidationError('A few more photos will make your site and posts look great. Can you add at least 3?');
@@ -212,12 +191,15 @@ export default function OnboardingPage() {
 
     const websitePromise = generateWebsite(
       state.description,
-      state.photoPreviews, // URLs of uploaded photos
+      state.photoPreviews,
     ).catch(() => null);
 
     const [revealResult, websiteResult] = await Promise.all([revealPromise, websitePromise]);
 
-    setState((s) => ({ ...s, reveal: revealResult || MOCK_REVEAL }));
+    if (revealResult) {
+      setState((s) => ({ ...s, reveal: revealResult }));
+    }
+    // If reveal fails, state.reveal stays null — UI handles gracefully
 
     if (websiteResult) {
       setWebsiteHtml(websiteResult.site.html);
@@ -227,7 +209,7 @@ export default function OnboardingPage() {
     setIsGenerating(false);
   };
 
-  // Step 4 priority select → Step 5
+  // Step 4 priority select -> Step 5
   const handlePrioritySelect = (priority: Priority) => {
     tapSelect();
     setState((s) => ({ ...s, priority }));
@@ -239,16 +221,17 @@ export default function OnboardingPage() {
     setIsPublishing(true);
 
     try {
-      const formData = new FormData();
-      formData.append('businessName', state.businessName);
-      formData.append('businessType', state.businessType);
-      formData.append('city', state.city || 'Austin, TX');
-      formData.append('description', state.description);
-      formData.append('priority', state.priority || 'seo');
-      state.photos.forEach((photo) => formData.append('photos', photo));
+      const result = await completeOnboarding({
+        businessName: state.businessName,
+        businessType: state.businessType,
+        city: state.city || 'Austin, TX',
+        description: state.description,
+        priority: state.priority || 'seo',
+      });
 
-      const result = await completeOnboarding(formData);
-      localStorage.setItem('lg_conversation_id', result.conversationId);
+      if (result.conversationId) {
+        localStorage.setItem('lg_conversation_id', result.conversationId);
+      }
     } catch {
       // Even on error, proceed to main app — the thread will catch up
     }
@@ -257,7 +240,7 @@ export default function OnboardingPage() {
     tapCelebrate();
     setTimeout(() => {
       router.push('/app');
-    }, 3500); // Extra time for the celebration to land
+    }, 3500);
   };
 
   return (
@@ -387,32 +370,43 @@ export default function OnboardingPage() {
                 </div>
               ) : state.discovery ? (
                 <>
+                  {discoveryError && (
+                    <p className="text-body text-slate text-center">
+                      I couldn&apos;t find your business online yet — that&apos;s okay, we&apos;ll build your presence from scratch.
+                    </p>
+                  )}
+
                   <div className="card flex flex-col gap-3">
                     <h2 className="font-semibold">{state.discovery.businessName}</h2>
                     <div className="flex flex-col gap-2 text-body">
-                      <div className="flex items-center gap-2">
-                        <span className="text-slate w-6 text-center">📍</span>
-                        <span>{state.discovery.address}</span>
-                      </div>
+                      {state.discovery.address && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate w-6 text-center">📍</span>
+                          <span>{state.discovery.address}</span>
+                        </div>
+                      )}
                       <div className="flex items-center gap-2">
                         <span className="text-slate w-6 text-center">⭐</span>
                         <span>
                           {state.discovery.googleRating
                             ? `${state.discovery.googleRating} on Google (${state.discovery.reviewCount} reviews)`
                             : 'Not on Google yet'}
-                          {' · '}{state.discovery.yelpStatus}
+                          {state.discovery.yelpStatus !== 'Unknown' && ` · ${state.discovery.yelpStatus}`}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-slate w-6 text-center">📸</span>
                         <span>
-                          {state.discovery.photoCount} photos on Google · {state.discovery.instagramStatus}
+                          {state.discovery.photoCount} photos on Google
+                          {state.discovery.instagramStatus !== 'Unknown' && ` · ${state.discovery.instagramStatus}`}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-slate w-6 text-center">🌐</span>
-                        <span>{state.discovery.websiteStatus}</span>
-                      </div>
+                      {state.discovery.websiteStatus !== 'Unknown' && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate w-6 text-center">🌐</span>
+                          <span>{state.discovery.websiteStatus}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -560,7 +554,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Generating loading state — "like a sign being painted" */}
+          {/* Generating loading state */}
           {step === 4 && isGenerating && (
             <div className="flex-1 flex flex-col items-center justify-center gap-8 animate-in">
               <div className="relative">
@@ -572,14 +566,16 @@ export default function OnboardingPage() {
                 >
                   {state.businessName}
                 </h1>
-                <p
-                  className="text-body text-slate text-center mt-2"
-                  style={{
-                    animation: 'fadeUp 1.5s cubic-bezier(0, 0, 0.2, 1) 0.5s both',
-                  }}
-                >
-                  {state.reveal?.tagline || MOCK_REVEAL.tagline}
-                </p>
+                {state.reveal?.tagline && (
+                  <p
+                    className="text-body text-slate text-center mt-2"
+                    style={{
+                      animation: 'fadeUp 1.5s cubic-bezier(0, 0, 0.2, 1) 0.5s both',
+                    }}
+                  >
+                    {state.reveal.tagline}
+                  </p>
+                )}
               </div>
               <div className="flex flex-col items-center gap-3">
                 <div className="loading-glow w-48 h-1 rounded-full" />
@@ -596,17 +592,13 @@ export default function OnboardingPage() {
           )}
 
           {/* ============================================================
-           * STEP 5: The Reveal — The iPhone Moment
+           * STEP 5: The Reveal
            * ============================================================ */}
           {step === 5 && (
             <div className="flex flex-col gap-8 flex-1">
               {publishedAll ? (
-                /* ============================================================
-                 * CELEBRATION MOMENT — The emotional peak
-                 * Confetti + business name + welcome. Then auto-transition.
-                 * ============================================================ */
+                /* CELEBRATION MOMENT */
                 <div className="flex-1 flex flex-col items-center justify-center gap-6 relative overflow-hidden">
-                  {/* CSS confetti — 20 pieces falling from above */}
                   <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
                     {Array.from({ length: 20 }).map((_, i) => (
                       <span
@@ -630,7 +622,6 @@ export default function OnboardingPage() {
                     ))}
                   </div>
 
-                  {/* Checkmark circle */}
                   <div
                     className="w-20 h-20 rounded-full bg-sage-light flex items-center justify-center"
                     style={{ animation: 'fadeUp 400ms cubic-bezier(0, 0, 0.2, 1) both' }}
@@ -645,7 +636,6 @@ export default function OnboardingPage() {
                     </svg>
                   </div>
 
-                  {/* Business name — display type */}
                   <h1
                     className="text-display text-charcoal text-center"
                     style={{ animation: 'fadeUp 600ms cubic-bezier(0, 0, 0.2, 1) 400ms both' }}
@@ -653,7 +643,6 @@ export default function OnboardingPage() {
                     {state.businessName}
                   </h1>
 
-                  {/* Welcome message */}
                   <p
                     className="text-body text-slate text-center"
                     style={{ animation: 'fadeUp 600ms cubic-bezier(0, 0, 0.2, 1) 700ms both' }}
@@ -661,7 +650,6 @@ export default function OnboardingPage() {
                     Welcome to LocalGenius.
                   </p>
 
-                  {/* Tagline */}
                   <p
                     className="text-caption text-slate-light text-center"
                     style={{ animation: 'fadeUp 600ms cubic-bezier(0, 0, 0.2, 1) 1000ms both' }}
@@ -669,7 +657,6 @@ export default function OnboardingPage() {
                     Your business, handled.
                   </p>
 
-                  {/* Confetti keyframes */}
                   <style jsx>{`
                     @keyframes confettiFall {
                       0% {
@@ -688,7 +675,7 @@ export default function OnboardingPage() {
                 <>
                   <h1 className="animate-in">Here&apos;s what I built for you.</h1>
 
-                  {/* Website — real preview via iframe or styled fallback */}
+                  {/* Website preview */}
                   <div className="card animate-in reveal-stagger-1 flex flex-col gap-card-gap">
                     <span className="text-caption text-slate uppercase tracking-widest font-semibold">
                       Your Website
@@ -717,7 +704,7 @@ export default function OnboardingPage() {
                           loading="eager"
                         />
                       ) : (
-                        /* Styled fallback when API isn't available */
+                        /* Styled fallback when generation hasn't completed */
                         <div className="bg-warm-white">
                           {state.photoPreviews[0] ? (
                             <div className="relative h-40 overflow-hidden">
@@ -725,9 +712,11 @@ export default function OnboardingPage() {
                               <div className="absolute inset-0 bg-gradient-to-t from-charcoal/70 to-transparent" />
                               <div className="absolute bottom-0 left-0 right-0 p-4">
                                 <h3 className="text-h2 text-white font-semibold">{state.businessName}</h3>
-                                <p className="text-caption text-white/80">
-                                  {state.reveal?.tagline || MOCK_REVEAL.tagline}
-                                </p>
+                                {state.reveal?.tagline && (
+                                  <p className="text-caption text-white/80">
+                                    {state.reveal.tagline}
+                                  </p>
+                                )}
                               </div>
                             </div>
                           ) : (
@@ -736,9 +725,11 @@ export default function OnboardingPage() {
                             </div>
                           )}
                           <div className="p-4 flex flex-col gap-3">
-                            <p className="text-caption text-charcoal leading-relaxed">
-                              {state.reveal?.businessDescription || MOCK_REVEAL.businessDescription}
-                            </p>
+                            {state.reveal?.businessDescription && (
+                              <p className="text-caption text-charcoal leading-relaxed">
+                                {state.reveal.businessDescription}
+                              </p>
+                            )}
                             <div className="flex gap-2">
                               <div className="flex-1 bg-terracotta text-white text-small text-center py-2 rounded-sm font-semibold">
                                 Book a Table
@@ -795,7 +786,6 @@ export default function OnboardingPage() {
                               });
                             } else {
                               await navigator.clipboard.writeText(websitePreviewUrl || siteUrl);
-                              // TODO: show toast "Link copied!"
                             }
                           }}
                         />
@@ -805,56 +795,62 @@ export default function OnboardingPage() {
                   </div>
 
                   {/* Social post */}
-                  <div className="card animate-in reveal-stagger-2 flex flex-col gap-card-gap">
-                    <span className="text-caption text-slate uppercase tracking-widest font-semibold">
-                      Your First Post
-                    </span>
-                    {state.photoPreviews[0] && (
-                      <div className="aspect-square rounded-sm overflow-hidden">
-                        <img src={state.photoPreviews[0]} alt="Social post preview" className="w-full h-full object-cover" />
+                  {state.reveal?.socialPostDraft && (
+                    <div className="card animate-in reveal-stagger-2 flex flex-col gap-card-gap">
+                      <span className="text-caption text-slate uppercase tracking-widest font-semibold">
+                        Your First Post
+                      </span>
+                      {state.photoPreviews[0] && (
+                        <div className="aspect-square rounded-sm overflow-hidden">
+                          <img src={state.photoPreviews[0]} alt="Social post preview" className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                      <p className="text-body text-charcoal">
+                        {state.reveal.socialPostDraft}
+                      </p>
+                      <div className="flex gap-3">
+                        <div className="flex-[3]"><Button variant="primary" label="Post Now" fullWidth onClick={() => {}} /></div>
+                        <div className="flex-[2]"><Button variant="secondary" label="Edit" fullWidth onClick={() => {}} /></div>
                       </div>
-                    )}
-                    <p className="text-body text-charcoal">
-                      {state.reveal?.socialPostDraft || MOCK_REVEAL.socialPostDraft}
-                    </p>
-                    <div className="flex gap-3">
-                      <div className="flex-[3]"><Button variant="primary" label="Post Now" fullWidth onClick={() => {}} /></div>
-                      <div className="flex-[2]"><Button variant="secondary" label="Edit" fullWidth onClick={() => {}} /></div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Google listing */}
-                  <div className="card animate-in reveal-stagger-3 flex flex-col gap-card-gap">
-                    <span className="text-caption text-slate uppercase tracking-widest font-semibold">
-                      Your Google Listing
-                    </span>
-                    <ul className="flex flex-col gap-2">
-                      {(state.reveal?.googleOptimizations || MOCK_REVEAL.googleOptimizations).map((opt, i) => (
-                        <li key={i} className="flex items-start gap-2 text-body text-charcoal">
-                          <span className="text-sage mt-0.5">✓</span>
-                          {opt}
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="flex gap-3">
-                      <div className="flex-[3]"><Button variant="primary" label="Looks Good" fullWidth onClick={() => {}} /></div>
-                      <div className="flex-[2]"><Button variant="secondary" label="Edit" fullWidth onClick={() => {}} /></div>
+                  {state.reveal?.googleOptimizations && state.reveal.googleOptimizations.length > 0 && (
+                    <div className="card animate-in reveal-stagger-3 flex flex-col gap-card-gap">
+                      <span className="text-caption text-slate uppercase tracking-widest font-semibold">
+                        Your Google Listing
+                      </span>
+                      <ul className="flex flex-col gap-2">
+                        {state.reveal.googleOptimizations.map((opt, i) => (
+                          <li key={i} className="flex items-start gap-2 text-body text-charcoal">
+                            <span className="text-sage mt-0.5">✓</span>
+                            {opt}
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="flex gap-3">
+                        <div className="flex-[3]"><Button variant="primary" label="Looks Good" fullWidth onClick={() => {}} /></div>
+                        <div className="flex-[2]"><Button variant="secondary" label="Edit" fullWidth onClick={() => {}} /></div>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Campaign */}
-                  <div className="card animate-in reveal-stagger-4 flex flex-col gap-card-gap">
-                    <span className="text-caption text-slate uppercase tracking-widest font-semibold">
-                      First Campaign
-                    </span>
-                    <p className="text-body text-charcoal">
-                      {state.reveal?.suggestedCampaign || MOCK_REVEAL.suggestedCampaign}
-                    </p>
-                    <div className="flex gap-3">
-                      <div className="flex-[3]"><Button variant="primary" label="Start Campaign" fullWidth onClick={() => {}} /></div>
-                      <div className="flex-[2]"><Button variant="secondary" label="Later" fullWidth onClick={() => {}} /></div>
+                  {state.reveal?.suggestedCampaign && (
+                    <div className="card animate-in reveal-stagger-4 flex flex-col gap-card-gap">
+                      <span className="text-caption text-slate uppercase tracking-widest font-semibold">
+                        First Campaign
+                      </span>
+                      <p className="text-body text-charcoal">
+                        {state.reveal.suggestedCampaign}
+                      </p>
+                      <div className="flex gap-3">
+                        <div className="flex-[3]"><Button variant="primary" label="Start Campaign" fullWidth onClick={() => {}} /></div>
+                        <div className="flex-[2]"><Button variant="secondary" label="Later" fullWidth onClick={() => {}} /></div>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Master publish */}
                   <div className="mt-4 mb-8">

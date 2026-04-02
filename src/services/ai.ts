@@ -129,20 +129,26 @@ export async function generateDigestNarrative(
   metrics: Record<string, unknown>
 ): Promise<string> {
   const competitorBlock = metrics.competitorContext
-    ? `\n\nCompetitor context: ${JSON.stringify(metrics.competitorContext)}\nInclude a brief competitor comparison in Act 1. Tone: motivating and proud — highlight wins ("you're rated higher than…", "you're gaining reviews faster"). Where the business is behind, frame it as an opportunity ("close the review gap") not a threat. Never anxiety-inducing.`
-    : "";
+    ? `\n\nCompetitor context: ${JSON.stringify(metrics.competitorContext)}\nUse this data in "How You Compare". Tone: motivating and proud — highlight wins ("you're rated higher than…", "you're gaining reviews faster"). Where the business is behind, frame it as an opportunity ("close the review gap") not a threat. Never anxiety-inducing.`
+    : "\n\nNo competitor data available — skip the 'How You Compare' section or note that competitor tracking isn't set up yet.";
+
+  const seoBlock = metrics.seoScore
+    ? `\n\nSEO score: ${JSON.stringify(metrics.seoScore)}\nUse this in "Your SEO Health". Show the score and grade (e.g., "72/100, grade B"). Mention the top recommendation. If the score improved from last week, celebrate it.`
+    : "\n\nNo SEO data available — skip the 'Your SEO Health' section or note that the first SEO audit is coming soon.";
 
   return generate({
-    prompt: `Generate a Weekly Digest for ${business.name}. Structure it in three acts:
+    prompt: `Generate a Weekly Digest for ${business.name}. Structure it in five sections:
 
-Act 1 — "Here's what happened" (what the world did): Summarize the metrics in plain language. Never a number without context.
-Act 2 — "Here's what I did" (what LocalGenius did): List actions taken this week.
-Act 3 — "Here's what I recommend" (what to do next): One specific, actionable recommendation.
+1. "What Happened" (what the world did): Summarize metrics — reviews, visits, calls, bookings. Never a number without context.
+2. "What I Did" (what LocalGenius did): Actions completed — posts published, reviews responded, emails sent.
+3. "How You Compare" (competitor comparison): Compare review counts, ratings, and momentum vs competitors.
+4. "Your SEO Health" (SEO score): Show the score, grade, and top recommendation.
+5. "What I Recommend" (what to do next): One specific, actionable recommendation informed by competitor and SEO data.
 
-Metrics this week: ${JSON.stringify(metrics)}${competitorBlock}
+Metrics this week: ${JSON.stringify(metrics)}${competitorBlock}${seoBlock}
 
-Tone: warm, conversational, slightly proud of their business. Keep the entire digest under 200 words.`,
+Tone: warm, conversational, slightly proud of their business. Keep the entire digest under 300 words.`,
     model: "claude-haiku-4-5-20251001",
-    maxTokens: 512,
+    maxTokens: 768,
   });
 }

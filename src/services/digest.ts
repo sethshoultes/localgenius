@@ -2,10 +2,12 @@
  * Weekly Digest Generator
  * Spec: engineering/data-model.md (Weekly Digests), product-design.md Section 4
  *
- * Generates the 3-act narrative:
- *   Act 1: "Here's what happened" (what the world did)
- *   Act 2: "Here's what I did" (what LocalGenius did)
- *   Act 3: "Here's what I recommend" (what to do next)
+ * Generates the 5-section narrative:
+ *   1. "What Happened" — metrics summary (reviews, visits, calls, bookings)
+ *   2. "What I Did" — actions completed (posts, review responses, emails)
+ *   3. "How You Compare" — competitor comparison (ratings, review counts)
+ *   4. "Your SEO Health" — SEO score, grade, top recommendation
+ *   5. "What I Recommend" — AI recommendations informed by all data
  *
  * Uses Claude Haiku 4.5 for batch generation (cost optimization).
  */
@@ -23,6 +25,7 @@ import { generateDigestNarrative } from "./ai";
 import { getWeeklyAggregates, getAttributionSummary } from "./analytics";
 import { getReviewTrends } from "./reviews";
 import { getCompetitorDigestSection } from "./competitor-monitor";
+import { runAudit } from "./seo";
 
 interface DigestData {
   business: { id: string; name: string; vertical: string; city: string };
@@ -31,6 +34,7 @@ interface DigestData {
   reviewTrends: Record<string, number>;
   attribution: Record<string, number>;
   competitorContext: Record<string, unknown> | null;
+  seoScore: { overall: number; grade: string; topRecommendation: string } | null;
   narrative: string;
 }
 
@@ -101,7 +105,21 @@ export async function generateDigest(
       }
     : null;
 
-  // Generate the narrative using AI (now includes competitor context)
+  // Run SEO audit for the SEO Health section
+  let seoScore: DigestData["seoScore"] = null;
+  try {
+    const audit = await runAudit(businessId, organizationId);
+    const overall = audit.score.overall;
+    const grade =
+      overall >= 90 ? "A" : overall >= 80 ? "B" : overall >= 70 ? "C" : overall >= 60 ? "D" : "F";
+    const topRecommendation =
+      audit.recommendations[0]?.description || "Keep up the great work!";
+    seoScore = { overall, grade, topRecommendation };
+  } catch {
+    // SEO audit is non-critical — digest still generates without it
+  }
+
+  // Generate the narrative using AI (now includes competitor + SEO context)
   const narrativeMetrics: Record<string, unknown> = {
     ...metrics,
     ...actionsCompleted,
@@ -113,6 +131,10 @@ export async function generateDigest(
 
   if (competitorContext) {
     narrativeMetrics.competitorContext = competitorContext;
+  }
+
+  if (seoScore) {
+    narrativeMetrics.seoScore = seoScore;
   }
 
   const narrative = await generateDigestNarrative(
@@ -129,7 +151,7 @@ export async function generateDigest(
     periodEnd: now,
     metrics,
     actionsCompleted,
-    recommendations: { narrative },
+    recommendations: { narrative, seoScore, competitorContext },
   });
 
   // Also store as a message in the conversation thread
@@ -152,6 +174,7 @@ export async function generateDigest(
         actionsCompleted,
         reviewTrends,
         competitorContext,
+        seoScore,
         periodStart: oneWeekAgo.toISOString(),
         periodEnd: now.toISOString(),
       },
@@ -171,6 +194,7 @@ export async function generateDigest(
     reviewTrends,
     attribution,
     competitorContext,
+    seoScore,
     narrative,
   };
 }

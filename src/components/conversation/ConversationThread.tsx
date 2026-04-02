@@ -8,6 +8,7 @@ import PublishedCard from './PublishedCard';
 import ScheduledCard from './ScheduledCard';
 import InsightCard from './InsightCard';
 import ReviewAlertCard from './ReviewAlertCard';
+import TypingIndicator from './TypingIndicator';
 
 export type ThreadMessageType = 'user_message' | 'system_message' | 'approval_card' | 'report_card' | 'settings_card' | 'published_card' | 'scheduled_card' | 'insight_card' | 'review_alert_card';
 
@@ -209,15 +210,7 @@ export default function ConversationThread({
         {messages.map(renderMessage)}
 
         {/* Typing indicator */}
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-cream rounded-md rounded-bl-sm px-4 py-3 flex items-center gap-1.5">
-              <span className="w-2 h-2 bg-slate-light rounded-full animate-pulse-glow" style={{ animationDelay: '0ms' }} />
-              <span className="w-2 h-2 bg-slate-light rounded-full animate-pulse-glow" style={{ animationDelay: '200ms' }} />
-              <span className="w-2 h-2 bg-slate-light rounded-full animate-pulse-glow" style={{ animationDelay: '400ms' }} />
-            </div>
-          </div>
-        )}
+        {isLoading && <TypingIndicator />}
 
         <div ref={bottomRef} />
       </div>

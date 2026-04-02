@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/shared/Button';
+import { tapCelebrate, tapSelect } from '@/lib/haptics';
 import {
   discoverBusiness,
   generateReveal,
@@ -217,6 +218,7 @@ export default function OnboardingPage() {
 
   // Step 4 priority select → Step 5
   const handlePrioritySelect = (priority: Priority) => {
+    tapSelect();
     setState((s) => ({ ...s, priority }));
     setTimeout(() => goTo(5), 300);
   };
@@ -241,9 +243,10 @@ export default function OnboardingPage() {
     }
 
     setPublishedAll(true);
+    tapCelebrate();
     setTimeout(() => {
       router.push('/');
-    }, 2000);
+    }, 3500); // Extra time for the celebration to land
   };
 
   return (
@@ -587,15 +590,87 @@ export default function OnboardingPage() {
           {step === 5 && (
             <div className="flex flex-col gap-8 flex-1">
               {publishedAll ? (
-                /* Post-publish confirmation */
-                <div className="flex-1 flex flex-col items-center justify-center gap-4 animate-in">
-                  <div className="w-16 h-16 rounded-full bg-sage-light flex items-center justify-center">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-sage">
+                /* ============================================================
+                 * CELEBRATION MOMENT — The emotional peak
+                 * Confetti + business name + welcome. Then auto-transition.
+                 * ============================================================ */
+                <div className="flex-1 flex flex-col items-center justify-center gap-6 relative overflow-hidden">
+                  {/* CSS confetti — 20 pieces falling from above */}
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+                    {Array.from({ length: 20 }).map((_, i) => (
+                      <span
+                        key={i}
+                        className="absolute w-2 h-2 rounded-sm"
+                        style={{
+                          left: `${5 + Math.random() * 90}%`,
+                          top: '-8px',
+                          backgroundColor: [
+                            'var(--color-terracotta)',
+                            'var(--color-sage)',
+                            'var(--color-gold)',
+                            'var(--color-terracotta-light)',
+                            'var(--color-sage-light)',
+                          ][i % 5],
+                          animation: `confettiFall ${1.5 + Math.random() * 1.5}s ease-in ${Math.random() * 0.8}s forwards`,
+                          transform: `rotate(${Math.random() * 360}deg)`,
+                          opacity: 0.8 + Math.random() * 0.2,
+                        }}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Checkmark circle */}
+                  <div
+                    className="w-20 h-20 rounded-full bg-sage-light flex items-center justify-center"
+                    style={{ animation: 'fadeUp 400ms cubic-bezier(0, 0, 0.2, 1) both' }}
+                  >
+                    <svg
+                      width="40" height="40" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                      className="text-sage"
+                      style={{ animation: 'checkmark 400ms cubic-bezier(0.34, 1.56, 0.64, 1) 300ms both' }}
+                    >
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
                   </div>
-                  <h1 className="text-center">Published!</h1>
-                  <p className="text-body text-slate text-center">Welcome to LocalGenius.</p>
+
+                  {/* Business name — display type */}
+                  <h1
+                    className="text-display text-charcoal text-center"
+                    style={{ animation: 'fadeUp 600ms cubic-bezier(0, 0, 0.2, 1) 400ms both' }}
+                  >
+                    {state.businessName}
+                  </h1>
+
+                  {/* Welcome message */}
+                  <p
+                    className="text-body text-slate text-center"
+                    style={{ animation: 'fadeUp 600ms cubic-bezier(0, 0, 0.2, 1) 700ms both' }}
+                  >
+                    Welcome to LocalGenius.
+                  </p>
+
+                  {/* Tagline */}
+                  <p
+                    className="text-caption text-slate-light text-center"
+                    style={{ animation: 'fadeUp 600ms cubic-bezier(0, 0, 0.2, 1) 1000ms both' }}
+                  >
+                    Your business, handled.
+                  </p>
+
+                  {/* Confetti keyframes */}
+                  <style jsx>{`
+                    @keyframes confettiFall {
+                      0% {
+                        transform: translateY(0) rotate(0deg);
+                        opacity: 1;
+                      }
+                      100% {
+                        transform: translateY(calc(100vh + 20px)) rotate(720deg);
+                        opacity: 0;
+                      }
+                    }
+                  `}</style>
                 </div>
               ) : (
                 /* The reveal cards */

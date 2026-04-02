@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Button from '../shared/Button';
 import PublishedCard from './PublishedCard';
 import { approveAction, publishContent, respondToReview, ApiError } from '@/lib/api';
+import { tapLight, tapSuccess, tapAlert } from '@/lib/haptics';
 
 type ApprovalStatus = 'pending' | 'publishing' | 'approved' | 'published' | 'dismissed' | 'scheduled' | 'error';
 
@@ -47,29 +48,35 @@ export default function ApprovalCard({
     setErrorMessage('');
 
     try {
+      tapLight();
+
       // Use the real action approval endpoint if actionId is available
       if (actionId) {
         const result = await approveAction(actionId);
         if (result.postUrl) setPostUrl(result.postUrl);
+        tapSuccess();
         setStatus('published');
       } else if (contentId) {
         await publishContent(contentId);
+        tapSuccess();
         setStatus('published');
       } else if (reviewId && draftResponse) {
         await respondToReview(reviewId, draftResponse);
+        tapSuccess();
         setStatus('approved');
       } else {
-        // Generic approval — call the parent handler
+        tapLight();
         setStatus('approved');
       }
 
       primaryAction.onPress();
     } catch (err) {
       if (err instanceof ApiError) {
+        tapAlert();
         setErrorMessage('Something went wrong. Tap to try again.');
         setStatus('error');
       } else {
-        // Offline — optimistically approve, queue for later
+        tapLight();
         setStatus('approved');
         primaryAction.onPress();
       }

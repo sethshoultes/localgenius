@@ -5,29 +5,29 @@
 ## Pre-Launch (Day Before)
 
 ### Pages & Rendering
-- [ ] `/landing` renders with terracotta/sage colors, phone mockup, value props
-- [ ] `/pricing` renders with two tiers, Pro highlighted, feature comparison
-- [ ] `/welcome` renders onboarding — 5 steps load, progress bar works
-- [ ] `/` renders conversation thread with header, input bar, bottom nav
-- [ ] `/digest` renders Weekly Digest with 3-act structure
+- [x] `/landing` renders with terracotta/sage colors, phone mockup, value props
+- [x] `/pricing` renders with two tiers, Pro highlighted, feature comparison
+- [x] `/welcome` renders onboarding — 5 steps load, progress bar works
+- [x] `/` renders conversation thread with header, input bar, bottom nav
+- [x] `/digest` renders Weekly Digest with 3-act structure
 - [ ] All pages render correctly on iPhone SE (320px) through iPad Pro
-- [ ] Source Sans 3 web font loads (check heading rendering)
+- [x] Source Sans 3 web font loads (check heading rendering)
 - [ ] No horizontal scroll on any page at any breakpoint
 
 ### Onboarding Flow
-- [ ] Step 1: business name input + type grid + city auto-detect
-- [ ] Step 2: discovery animation → business profile card with reviews/rating
-- [ ] Step 3: photo upload — minimum 3 validation, preview thumbnails, remove
-- [ ] Step 4: priority selection — single tap advances
-- [ ] Step 5 (The Reveal): website preview in iframe, social post, Google listing, campaign
-- [ ] "Publish everything" → celebration confetti → transition to thread
-- [ ] Onboarding works end-to-end without errors in browser console
+- [x] Step 1: business name input + type grid + city auto-detect
+- [x] Step 2: discovery animation → business profile card with reviews/rating
+- [x] Step 3: photo upload — minimum 3 validation, preview thumbnails, remove
+- [x] Step 4: priority selection — single tap advances
+- [x] Step 5 (The Reveal): website preview in iframe, social post, Google listing, campaign
+- [x] "Publish everything" → celebration confetti → transition to thread
+- [x] Onboarding works end-to-end without errors in browser console
 
 ### Conversation AI
-- [ ] Type a message → AI response streams with typewriter effect
-- [ ] Response is contextual (mentions the business, uses warm voice)
-- [ ] System prompt follows brand rules (no "AI-powered", first person)
-- [ ] Approval cards render with Approve + Edit buttons
+- [x] Type a message → AI response streams with typewriter effect
+- [x] Response is contextual (mentions the business, uses warm voice)
+- [x] System prompt follows brand rules (no "AI-powered", first person)
+- [x] Approval cards render with Approve + Edit buttons
 - [ ] Approve → "Publishing..." → Published card with checkmark
 - [ ] Typing indicator (terracotta dots) appears during AI thinking
 

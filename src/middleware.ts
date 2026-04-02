@@ -19,7 +19,10 @@ const COOKIE_NAME = "lg_session";
 // ─── Route Classification ─────────────────────────────────────────────────────
 
 // Public pages — no auth required
-const PUBLIC_PAGES = ["/", "/about", "/pricing", "/demo", "/login", "/register", "/landing", "/welcome", "/forgot-password", "/reset-password"];
+const PUBLIC_PAGES = ["/", "/about", "/pricing", "/demo", "/sites", "/login", "/register", "/landing", "/welcome", "/forgot-password", "/reset-password"];
+
+// Public page patterns — checked with startsWith
+const PUBLIC_PAGE_PATTERNS = ["/site/"];
 
 // Public API routes — no auth required
 const PUBLIC_API_ROUTES = [
@@ -67,7 +70,12 @@ function isPublicAPI(pathname: string): boolean {
 }
 
 function isPublicPage(pathname: string): boolean {
-  return PUBLIC_PAGES.includes(pathname) || pathname.startsWith("/_next/") || pathname.includes(".");
+  return (
+    PUBLIC_PAGES.includes(pathname) ||
+    PUBLIC_PAGE_PATTERNS.some((pattern) => pathname.startsWith(pattern)) ||
+    pathname.startsWith("/_next/") ||
+    pathname.includes(".")
+  );
 }
 
 function skipRateLimit(pathname: string): boolean {

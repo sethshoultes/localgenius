@@ -23,16 +23,22 @@ export default function MarketingLayout({
 
         <div className="flex items-center gap-5">
           <Link
-            href="/about"
+            href="/sites"
             className="text-body text-slate hover:text-charcoal transition-colors no-underline hidden sm:inline"
           >
-            About
+            Examples
           </Link>
           <Link
             href="/pricing"
             className="text-body text-slate hover:text-charcoal transition-colors no-underline hidden sm:inline"
           >
             Pricing
+          </Link>
+          <Link
+            href="/about"
+            className="text-body text-slate hover:text-charcoal transition-colors no-underline hidden sm:inline"
+          >
+            About
           </Link>
           <Link
             href="/login"

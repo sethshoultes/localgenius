@@ -25,8 +25,8 @@ export default function LandingPage() {
           <span className="text-h2 text-charcoal">LocalGenius</span>
         </Link>
         <div className="flex items-center gap-4">
-          <Link href="/about" className="text-body text-slate hover:text-charcoal transition-colors no-underline hidden sm:inline">
-            About
+          <Link href="/sites" className="text-body text-slate hover:text-charcoal transition-colors no-underline hidden sm:inline">
+            Examples
           </Link>
           <Link href="/pricing" className="text-body text-slate hover:text-charcoal transition-colors no-underline hidden sm:inline">
             Pricing

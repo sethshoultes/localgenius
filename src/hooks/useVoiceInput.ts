@@ -3,7 +3,7 @@
 /**
  * useVoiceInput Hook
  *
- * Records audio via MediaRecorder API and sends to transcription endpoint.
+ * Records audio via MediaRecorder API and sends to transcription endpoint on Cloudflare.
  * Records while user holds the mic button, transcribes on release.
  *
  * Usage:
@@ -13,10 +13,10 @@
  */
 
 import { useState, useRef, useCallback } from 'react';
+import { transcribeAudio } from '@/services/cloudflare-ai';
 
 interface UseVoiceInputOptions {
   onTranscription: (text: string) => void;
-  transcribeUrl?: string;
 }
 
 interface UseVoiceInputReturn {
@@ -29,7 +29,6 @@ interface UseVoiceInputReturn {
 
 export function useVoiceInput({
   onTranscription,
-  transcribeUrl = '/api/voice/transcribe',
 }: UseVoiceInputOptions): UseVoiceInputReturn {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -99,28 +98,13 @@ export function useVoiceInput({
       setIsTranscribing(true);
       setError(null);
 
-      // Create FormData with audio blob
+      // Create audio blob
       const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
       audioChunksRef.current = [];
 
-      const formData = new FormData();
-      formData.append('audio', audioBlob, 'audio.webm');
-
-      // Send to transcription endpoint — uses lg_session httpOnly cookie
-      // via credentials: 'include'. The Cloudflare endpoint also accepts
-      // Bearer token from the session cookie (forwarded by the middleware).
-      const response = await fetch(transcribeUrl, {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error(`Transcription failed: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      const transcribedText = data.data?.text || data.text || '';
+      // Send to Cloudflare AI transcription endpoint
+      const data = await transcribeAudio(audioBlob);
+      const transcribedText = data.text || '';
 
       if (transcribedText.trim()) {
         onTranscription(transcribedText);
@@ -130,7 +114,7 @@ export function useVoiceInput({
     } finally {
       setIsTranscribing(false);
     }
-  }, [isRecording, onTranscription, transcribeUrl]);
+  }, [isRecording, onTranscription]);
 
   return {
     isRecording,

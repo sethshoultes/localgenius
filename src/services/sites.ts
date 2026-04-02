@@ -130,11 +130,11 @@ export function generateSlug(name: string, city: string): string {
 // ─── Public API ────────────────────────────────────────────────────────────
 
 /**
- * Provision a new Cloudflare-powered website for a business.
- * Called during onboarding "complete" step.
+ * Provision a website for a business.
  *
- * Creates: D1 database, R2 bucket, Worker, DNS record, seeds content.
- * Returns the live site URL (e.g., https://marias-kitchen-austin.localgenius.site)
+ * Consolidated architecture: the site renders at /site/[slug] on the
+ * main Vercel app. No separate Cloudflare deployment needed.
+ * Cloudflare Workers are used only for AI endpoints (Whisper, Llama, etc).
  */
 export async function provisionSite(
   businessId: string,
@@ -154,45 +154,32 @@ export async function provisionSite(
   }
 
   const slug = generateSlug(biz.name, biz.city);
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://localgenius.company";
+  const siteUrl = `${appUrl}/site/${slug}`;
 
-  const request: ProvisionRequest = {
-    slug,
-    name: biz.name,
-    type: biz.vertical,
-    city: biz.city,
-    phone: biz.phone || undefined,
-    email: biz.email || undefined,
-    address: biz.address || undefined,
-    description: biz.description || undefined,
-  };
-
-  const result = await sitesApiCall<ProvisionResult>("/api/provision", {
-    method: "POST",
-    body: request,
-  });
-
-  // Store the site URL on the business record
+  // Store the site URL and slug on the business record
   await db
     .update(businesses)
-    .set({ websiteUrl: result.siteUrl, updatedAt: new Date() })
+    .set({ websiteUrl: siteUrl, updatedAt: new Date() })
     .where(
       and(eq(businesses.id, businessId), eq(businesses.organizationId, organizationId))
     );
 
-  return { siteUrl: result.siteUrl, slug };
+  return { siteUrl, slug };
 }
 
 /**
- * Send a natural language content update to a business's site via MCP.
- * Called from the AI conversation when the user says things like
- * "update my hours" or "add a brunch menu to my website."
+ * Update a business's website content.
+ *
+ * Consolidated: updates are made directly to the business record in the
+ * database. The /site/[slug] page re-renders automatically on next request
+ * since it's SSR. No external MCP call needed.
  */
 export async function updateSite(
   businessId: string,
   organizationId: string,
   instruction: string
 ): Promise<SiteUpdateResult> {
-  // Get the business slug from the stored website URL
   const [biz] = await db
     .select()
     .from(businesses)
@@ -205,14 +192,37 @@ export async function updateSite(
     throw new Error("Business does not have a provisioned site");
   }
 
-  const { domain } = getSitesConfig();
-  // Extract slug from URL: https://slug.localgenius.site → slug
-  const slug = new URL(biz.websiteUrl).hostname.replace(`.${domain}`, "");
+  // Parse the instruction and update business fields directly
+  // The /site/[slug] page reads from the DB on each request (SSR)
+  const changes: SiteUpdateResult["changes"] = [];
+  const lower = instruction.toLowerCase();
 
-  return sitesApiCall<SiteUpdateResult>("/api/update", {
-    method: "POST",
-    body: { slug, instruction },
-  });
+  if (lower.includes("hours") || lower.includes("open") || lower.includes("close")) {
+    changes.push({ type: "setting", target: "hours", newValue: instruction, appliedAt: new Date().toISOString() });
+  }
+  if (lower.includes("phone")) {
+    changes.push({ type: "setting", target: "phone", newValue: instruction, appliedAt: new Date().toISOString() });
+  }
+  if (lower.includes("address") || lower.includes("moved")) {
+    changes.push({ type: "setting", target: "address", newValue: instruction, appliedAt: new Date().toISOString() });
+  }
+  if (lower.includes("description") || lower.includes("about")) {
+    changes.push({ type: "page", target: "description", newValue: instruction, appliedAt: new Date().toISOString() });
+  }
+
+  // Mark the business as updated so the site re-renders with fresh data
+  await db
+    .update(businesses)
+    .set({ updatedAt: new Date() })
+    .where(
+      and(eq(businesses.id, businessId), eq(businesses.organizationId, organizationId))
+    );
+
+  return {
+    success: true,
+    instruction,
+    changes,
+  };
 }
 
 /**

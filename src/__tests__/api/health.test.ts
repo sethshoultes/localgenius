@@ -14,8 +14,8 @@ describe("GET /api/health", () => {
     // Status is one of: healthy, degraded, unconfigured, unhealthy
     expect(["healthy", "degraded", "unconfigured", "unhealthy"]).toContain(body.data.status);
     expect(body.data.version).toBe("0.1.0");
-    expect(body.data.timestamp).toBeDefined();
-    expect(new Date(body.data.timestamp).toISOString()).toBe(body.data.timestamp);
+    expect(body.meta.timestamp).toBeDefined();
+    expect(new Date(body.meta.timestamp).toISOString()).toBe(body.meta.timestamp);
     // Deep health check fields present
     expect(body.data.database).toBeDefined();
     expect(body.data.ai).toBeDefined();

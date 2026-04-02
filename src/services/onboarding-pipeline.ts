@@ -25,6 +25,7 @@ import {
 } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { generateWebsite } from "./website-generator";
+import { provisionSite as provisionCloudfareSite } from "./sites";
 import { generateSocialPost, generate } from "./ai";
 import { syncReviews } from "./reviews";
 import { runAudit } from "./seo";
@@ -100,24 +101,33 @@ export async function runOnboardingPipeline(
     return result;
   }
 
-  // ─── Step 1: Generate Website ───────────────────────────────────────────
+  // ─── Step 1: Provision Live Website (Cloudflare Sites) ─────────────────
+  // Try Cloudflare-powered Emdash site first. Falls back to static HTML
+  // if Sites infrastructure isn't configured or provisioning fails.
   try {
-    await generateWebsite(input.businessId, input.organizationId, {
-      name: input.businessName,
-      vertical: input.vertical,
-      city: input.city,
-      state: input.state,
-      address: input.address,
-      phone: input.phone,
-      photos: input.photos,
-    });
-    result.websiteGenerated = true;
-    result.completedSteps++;
-
-    // Record event
-    await recordEvent(input, "website_generated", { source: "onboarding" });
-
-    logger.info("Pipeline: website generated", { businessId: input.businessId });
+    if (process.env.LOCALGENIUS_SITES_API_TOKEN) {
+      // Cloudflare Sites — real CMS-powered website with MCP updates
+      const site = await provisionCloudfareSite(input.businessId, input.organizationId);
+      result.websiteGenerated = true;
+      result.completedSteps++;
+      await recordEvent(input, "website_generated", { source: "onboarding", type: "cloudflare_sites", url: site.siteUrl });
+      logger.info("Pipeline: Cloudflare site provisioned", { businessId: input.businessId, siteUrl: site.siteUrl });
+    } else {
+      // Fallback: static HTML generator (no MCP, no CMS)
+      await generateWebsite(input.businessId, input.organizationId, {
+        name: input.businessName,
+        vertical: input.vertical,
+        city: input.city,
+        state: input.state,
+        address: input.address,
+        phone: input.phone,
+        photos: input.photos,
+      });
+      result.websiteGenerated = true;
+      result.completedSteps++;
+      await recordEvent(input, "website_generated", { source: "onboarding", type: "static_html" });
+      logger.info("Pipeline: static website generated (Sites not configured)", { businessId: input.businessId });
+    }
   } catch (err) {
     result.errors.push(`Website: ${errorMsg(err)}`);
     logger.error("Pipeline: website generation failed", {

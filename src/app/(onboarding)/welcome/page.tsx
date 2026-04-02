@@ -77,6 +77,7 @@ export default function OnboardingPage() {
   const [websiteHtml, setWebsiteHtml] = useState<string | null>(null);
   const [websitePreviewUrl, setWebsitePreviewUrl] = useState<string | null>(null);
   const [discoveryError, setDiscoveryError] = useState(false);
+  const [editingCity, setEditingCity] = useState(true);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const stepContainerRef = useRef<HTMLDivElement>(null);
@@ -87,6 +88,7 @@ export default function OnboardingPage() {
       navigator.geolocation.getCurrentPosition(
         () => {
           setState((s) => ({ ...s, city: 'Austin, TX' }));
+          setEditingCity(false);
         },
         () => {
           // Geolocation denied — leave empty for manual entry
@@ -320,12 +322,12 @@ export default function OnboardingPage() {
 
               <div className="flex items-center gap-2 text-body text-charcoal">
                 <span>📍</span>
-                {state.city ? (
+                {!editingCity && state.city ? (
                   <>
                     <span>{state.city}</span>
                     <button
                       className="text-caption text-terracotta ml-auto"
-                      onClick={() => setState({ ...state, city: '' })}
+                      onClick={() => setEditingCity(true)}
                     >
                       Edit
                     </button>
@@ -335,7 +337,9 @@ export default function OnboardingPage() {
                     type="text"
                     value={state.city}
                     onChange={(e) => setState({ ...state, city: e.target.value })}
+                    onBlur={() => { if (state.city) setEditingCity(false); }}
                     placeholder="What city are you in?"
+                    autoFocus={editingCity}
                     className="flex-1 text-body text-charcoal placeholder:text-slate-light bg-transparent border-b border-charcoal/12 focus:border-terracotta outline-none pb-1"
                   />
                 )}

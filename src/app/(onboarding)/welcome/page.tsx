@@ -461,10 +461,10 @@ export default function OnboardingPage() {
                     />
                     <button
                       onClick={() => removePhoto(i)}
-                      className="absolute top-1 right-1 w-6 h-6 bg-charcoal/60 text-white rounded-full flex items-center justify-center text-small opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute -top-1 -right-1 w-[44px] h-[44px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                       aria-label={`Remove photo ${i + 1}`}
                     >
-                      ×
+                      <span className="w-6 h-6 bg-charcoal/60 text-white rounded-full flex items-center justify-center text-small">×</span>
                     </button>
                   </div>
                 ))}
@@ -675,7 +675,7 @@ export default function OnboardingPage() {
                       {state.businessName.toLowerCase().replace(/[^a-z0-9]/g, '')}atx.com — live now
                     </p>
                     <div className="flex gap-3">
-                      <div className="flex-[3]">
+                      <div className="flex-[2]">
                         <Button
                           variant="primary"
                           label="View Site"
@@ -687,7 +687,34 @@ export default function OnboardingPage() {
                           }}
                         />
                       </div>
-                      <div className="flex-[2]"><Button variant="secondary" label="Edit" fullWidth onClick={() => {}} /></div>
+                      <div className="flex-[2]">
+                        <Button
+                          variant="secondary"
+                          label="Share"
+                          fullWidth
+                          icon={
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                              <polyline points="16 6 12 2 8 6" />
+                              <line x1="12" x2="12" y1="2" y2="15" />
+                            </svg>
+                          }
+                          onClick={async () => {
+                            const siteUrl = `https://${state.businessName.toLowerCase().replace(/[^a-z0-9]/g, '')}atx.com`;
+                            if (navigator.share) {
+                              await navigator.share({
+                                title: state.businessName,
+                                text: `Check out ${state.businessName}'s new website!`,
+                                url: websitePreviewUrl || siteUrl,
+                              });
+                            } else {
+                              await navigator.clipboard.writeText(websitePreviewUrl || siteUrl);
+                              // TODO: show toast "Link copied!"
+                            }
+                          }}
+                        />
+                      </div>
+                      <div className="flex-1"><Button variant="ghost" label="Edit" fullWidth onClick={() => {}} /></div>
                     </div>
                   </div>
 

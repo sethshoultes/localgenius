@@ -21,7 +21,7 @@ export default function MessageBubble({
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
-      <div className={`max-w-[${isUser ? '80' : '85'}%] flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
+      <div className={`${isUser ? 'max-w-[80%] items-end' : 'max-w-[85%] items-start'} flex flex-col`}>
         {/* Bubble */}
         <div
           className={[

@@ -3,12 +3,28 @@
   "framework": "nextjs",
   "crons": [
     {
-      "path": "/api/cron/digest",
+      "path": "/api/cron/run?job=weekly-digest",
       "schedule": "0 10 * * 1"
     },
     {
-      "path": "/api/cron/google-sync",
+      "path": "/api/cron/run?job=google-review-sync",
       "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/run?job=meta-engagement-sync",
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/run?job=analytics-daily-rollup",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/run?job=token-refresh",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/run?job=stale-event-cleanup",
+      "schedule": "0 3 * * 0"
     }
   ]
 }

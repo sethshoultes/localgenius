@@ -377,6 +377,24 @@ export async function publishContent(
   });
 }
 
+// Actions
+export interface ActionApprovalResult {
+  actionId: string;
+  status: 'completed' | 'failed';
+  published?: boolean;
+  postUrl?: string;
+  live?: boolean;
+  executed?: boolean;
+}
+
+export async function approveAction(
+  actionId: string,
+): Promise<ActionApprovalResult> {
+  return request<ActionApprovalResult>(`/actions/${actionId}/approve`, {
+    method: 'POST',
+  });
+}
+
 // Reviews
 export async function getReviews(): Promise<Review[]> {
   return request<Review[]>('/reviews');

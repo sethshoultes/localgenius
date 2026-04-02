@@ -4,8 +4,10 @@ import { useRef, useEffect } from 'react';
 import MessageBubble from './MessageBubble';
 import ApprovalCard from './ApprovalCard';
 import SettingsCard from './SettingsCard';
+import PublishedCard from './PublishedCard';
+import ScheduledCard from './ScheduledCard';
 
-export type ThreadMessageType = 'user_message' | 'system_message' | 'approval_card' | 'report_card' | 'settings_card';
+export type ThreadMessageType = 'user_message' | 'system_message' | 'approval_card' | 'report_card' | 'settings_card' | 'published_card' | 'scheduled_card';
 
 export interface ThreadMessage {
   id: string;
@@ -19,6 +21,12 @@ export interface ThreadMessage {
     secondaryLabel?: string;
     status?: 'pending' | 'approved' | 'dismissed' | 'published' | 'scheduled';
     contentId?: string;
+    actionId?: string;
+    platform?: 'instagram' | 'facebook' | 'google';
+    postUrl?: string;
+    scheduledTime?: string;
+    reviewId?: string;
+    draftResponse?: string;
     fields?: { key: string; label: string; value: string; type?: 'text' | 'tel' | 'url' | 'textarea'; placeholder?: string }[];
   };
 }
@@ -115,6 +123,31 @@ export default function ConversationThread({
                 await onSettingsSave(values);
               }
             }}
+            timestamp={msg.timestamp}
+          />
+        );
+
+      case 'published_card':
+        return (
+          <PublishedCard
+            key={msg.id}
+            platform={msg.metadata?.platform ?? 'instagram'}
+            title={msg.metadata?.title ?? 'Content published'}
+            preview={msg.content}
+            postUrl={msg.metadata?.postUrl}
+            timestamp={msg.timestamp}
+          />
+        );
+
+      case 'scheduled_card':
+        return (
+          <ScheduledCard
+            key={msg.id}
+            title={msg.metadata?.title ?? 'Post scheduled'}
+            description={msg.content}
+            scheduledTime={msg.metadata?.scheduledTime ?? ''}
+            platform={msg.metadata?.platform ?? 'instagram'}
+            onCancel={() => {/* TODO: call cancel endpoint */}}
             timestamp={msg.timestamp}
           />
         );

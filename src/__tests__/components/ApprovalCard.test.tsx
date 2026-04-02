@@ -59,7 +59,7 @@ describe('ApprovalCard', () => {
     });
   });
 
-  it('shows "Approved" text after approval', async () => {
+  it('shows success text after approval', async () => {
     const user = userEvent.setup();
     mockedPublish.mockResolvedValueOnce(undefined as never);
     renderCard({ contentId: 'c-1' });
@@ -67,7 +67,8 @@ describe('ApprovalCard', () => {
     await user.click(screen.getByRole('button', { name: /approve/i }));
 
     await waitFor(() => {
-      expect(screen.getByText('Approved')).toBeInTheDocument();
+      // With contentId, status transitions to 'published' → shows "Posted"
+      expect(screen.getByText('Posted')).toBeInTheDocument();
     });
   });
 

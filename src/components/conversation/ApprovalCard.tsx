@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import Button from '../shared/Button';
-import { publishContent, respondToReview, ApiError } from '@/lib/api';
+import PublishedCard from './PublishedCard';
+import { approveAction, publishContent, respondToReview, ApiError } from '@/lib/api';
 
-type ApprovalStatus = 'pending' | 'approved' | 'dismissed' | 'published' | 'scheduled' | 'error';
+type ApprovalStatus = 'pending' | 'publishing' | 'approved' | 'published' | 'dismissed' | 'scheduled' | 'error';
 
 interface ApprovalCardProps {
   title: string;
@@ -14,9 +15,11 @@ interface ApprovalCardProps {
   secondaryAction: { label: string; onPress: () => void };
   status?: ApprovalStatus;
   timestamp: string;
+  actionId?: string;
   contentId?: string;
   reviewId?: string;
   draftResponse?: string;
+  platform?: 'instagram' | 'facebook' | 'google';
 }
 
 export default function ApprovalCard({
@@ -27,26 +30,39 @@ export default function ApprovalCard({
   secondaryAction,
   status: initialStatus = 'pending',
   timestamp,
+  actionId,
   contentId,
   reviewId,
   draftResponse,
+  platform,
 }: ApprovalCardProps) {
   const [status, setStatus] = useState<ApprovalStatus>(initialStatus);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [postUrl, setPostUrl] = useState<string | undefined>();
 
   const handleApprove = async () => {
     setIsLoading(true);
+    setStatus('publishing');
     setErrorMessage('');
 
     try {
-      if (contentId) {
+      // Use the real action approval endpoint if actionId is available
+      if (actionId) {
+        const result = await approveAction(actionId);
+        if (result.postUrl) setPostUrl(result.postUrl);
+        setStatus('published');
+      } else if (contentId) {
         await publishContent(contentId);
+        setStatus('published');
       } else if (reviewId && draftResponse) {
         await respondToReview(reviewId, draftResponse);
+        setStatus('approved');
+      } else {
+        // Generic approval — call the parent handler
+        setStatus('approved');
       }
 
-      setStatus('approved');
       primaryAction.onPress();
     } catch (err) {
       if (err instanceof ApiError) {
@@ -62,23 +78,32 @@ export default function ApprovalCard({
     }
   };
 
-  const handleDismiss = () => {
-    setStatus('dismissed');
-  };
-
   const handleRetry = () => {
     setStatus('pending');
     setErrorMessage('');
   };
 
-  // Dismissed — remove from view
+  // Published — transition to PublishedCard
+  if (status === 'published' && platform) {
+    return (
+      <PublishedCard
+        platform={platform}
+        title={title}
+        preview={description}
+        postUrl={postUrl}
+        timestamp={timestamp}
+      />
+    );
+  }
+
+  // Dismissed — collapsed with undo
   if (status === 'dismissed') {
     return (
       <div className="card opacity-40 py-3 px-card-padding animate-in">
         <p className="text-caption text-slate line-through">{title}</p>
         <button
           onClick={() => setStatus('pending')}
-          className="text-caption text-terracotta mt-1"
+          className="text-caption text-terracotta mt-1 min-h-tap-min flex items-center"
         >
           Undo
         </button>
@@ -102,13 +127,13 @@ export default function ApprovalCard({
       {status === 'error' && (
         <button
           onClick={handleRetry}
-          className="px-4 py-3 bg-error-light text-error-dark text-body rounded-sm text-left"
+          className="px-4 py-3 bg-error-light text-error-dark text-body rounded-sm text-left min-h-tap-min"
         >
           {errorMessage} ↻
         </button>
       )}
 
-      {/* Action buttons */}
+      {/* Action buttons — pending or error */}
       {(status === 'pending' || status === 'error') && (
         <div className="flex gap-3">
           <div className="flex-[3]">
@@ -131,10 +156,18 @@ export default function ApprovalCard({
         </div>
       )}
 
-      {/* Success state */}
-      {(status === 'approved' || status === 'published' || status === 'scheduled') && (
+      {/* Publishing state — spinner with text */}
+      {status === 'publishing' && (
+        <div className="flex items-center gap-3 py-3" aria-live="polite">
+          <span className="loading-glow w-5 h-5 rounded-full flex-shrink-0" />
+          <span className="text-body text-slate">Publishing...</span>
+        </div>
+      )}
+
+      {/* Approved/published success (without platform — no PublishedCard transition) */}
+      {(status === 'approved' || (status === 'published' && !platform) || status === 'scheduled') && (
         <div
-          className="flex items-center gap-2 py-2 text-body font-semibold text-sage transition-all duration-normal"
+          className="flex items-center gap-2 py-2 text-body font-semibold text-sage-text transition-all duration-normal"
           aria-live="polite"
         >
           <svg

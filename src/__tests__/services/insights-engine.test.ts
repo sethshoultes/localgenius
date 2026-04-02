@@ -22,9 +22,14 @@ const mockSelectWhere = vi.fn().mockImplementation(() => makeThenable([]));
 const mockSelectFrom = vi.fn().mockReturnValue({ where: mockSelectWhere });
 const mockSelect = vi.fn().mockReturnValue({ from: mockSelectFrom });
 
+const mockInsertOnConflict = vi.fn().mockResolvedValue(undefined);
+const mockInsertValues = vi.fn().mockReturnValue({ onConflictDoUpdate: mockInsertOnConflict });
+const mockInsert = vi.fn().mockReturnValue({ values: mockInsertValues });
+
 vi.mock("@/lib/db", () => ({
   db: {
     select: (...args: unknown[]) => mockSelect(...args),
+    insert: (...args: unknown[]) => mockInsert(...args),
   },
   getDb: vi.fn(),
 }));
@@ -61,6 +66,12 @@ vi.mock("@/db/schema", () => ({
   },
   competitors: {},
   actions: {},
+  insightActions: {
+    insightId: "insightActions.insightId",
+    businessId: "insightActions.businessId",
+    action: "insightActions.action",
+    actedAt: "insightActions.actedAt",
+  },
 }));
 
 // Mock drizzle-orm operators
@@ -258,32 +269,24 @@ describe("insights-engine — generateInsights()", () => {
   });
 });
 
-// ─── Tests: trackInsightAction ───────────────────────────────────────────────
+// ─── Tests: trackInsightAction (database-backed — Jensen #6) ────────────────
 
 describe("insights-engine — trackInsightAction()", () => {
   let trackInsightAction: typeof import("@/services/insights-engine").trackInsightAction;
-  let getInsightHistory: typeof import("@/services/insights-engine").getInsightHistory;
 
   beforeEach(async () => {
     vi.clearAllMocks();
-
     const mod = await import("@/services/insights-engine");
     trackInsightAction = mod.trackInsightAction;
-    getInsightHistory = mod.getInsightHistory;
   });
 
-  it("tracks insight actions", () => {
-    trackInsightAction("insight-123", "acted");
-
-    const history = getInsightHistory();
-    expect(history.has("insight-123")).toBe(true);
-    expect(history.get("insight-123")?.action).toBe("acted");
+  it("persists insight action to database", async () => {
+    await trackInsightAction("insight-123", "biz-uuid-001", "acted");
+    expect(mockInsert).toHaveBeenCalled();
   });
 
-  it("tracks dismissed actions", () => {
-    trackInsightAction("insight-456", "dismissed");
-
-    const history = getInsightHistory();
-    expect(history.get("insight-456")?.action).toBe("dismissed");
+  it("persists dismissed action to database", async () => {
+    await trackInsightAction("insight-456", "biz-uuid-001", "dismissed");
+    expect(mockInsert).toHaveBeenCalled();
   });
 });

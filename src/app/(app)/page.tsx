@@ -16,6 +16,7 @@ import {
   type Message,
   ApiError,
 } from '@/lib/api';
+import { getAllDemoMessages } from '@/lib/demo-conversation';
 
 function apiMessageToThread(msg: Message): ThreadMessage {
   return {
@@ -70,6 +71,16 @@ export default function ThreadPage() {
     let mounted = true;
 
     async function init() {
+      // Demo mode: load the rich demo conversation showcasing all card types
+      if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+        if (mounted) {
+          setConversationId('demo');
+          setMessages(getAllDemoMessages());
+          setIsInitLoading(false);
+        }
+        return;
+      }
+
       try {
         const savedId = localStorage.getItem('lg_conversation_id');
         if (savedId) {

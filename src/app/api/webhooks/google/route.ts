@@ -19,16 +19,19 @@ export async function POST(request: NextRequest) {
   const channelToken = request.headers.get("x-goog-channel-token");
   const resourceState = request.headers.get("x-goog-resource-state") || "";
 
-  // Verify the notification is from Google
+  // Verify the notification is from Google — fail closed
   const expectedToken = process.env.GOOGLE_WEBHOOK_TOKEN;
-  if (expectedToken && channelToken) {
-    const valid = verifyGooglePushNotification(channelToken, expectedToken);
-    if (!valid) {
-      return NextResponse.json(
-        { error: { code: "INVALID_TOKEN", message: "Invalid channel token" } },
-        { status: 401 }
-      );
-    }
+  if (!expectedToken) {
+    return NextResponse.json(
+      { error: { code: "NOT_CONFIGURED", message: "Google webhook token not configured" } },
+      { status: 503 }
+    );
+  }
+  if (!channelToken || !verifyGooglePushNotification(channelToken, expectedToken)) {
+    return NextResponse.json(
+      { error: { code: "INVALID_TOKEN", message: "Invalid channel token" } },
+      { status: 401 }
+    );
   }
 
   // Initial sync notification — just acknowledge

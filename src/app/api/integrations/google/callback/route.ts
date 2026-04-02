@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { exchangeCode, storeConnection } from "@/services/google-business";
+import { verifyState } from "@/lib/oauth-state";
 
 /**
  * GET /api/integrations/google/callback
@@ -29,10 +30,14 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Decode state to get business context
-    const stateData = JSON.parse(
-      Buffer.from(state, "base64url").toString("utf-8")
-    ) as { businessId: string; organizationId: string };
+    // Verify HMAC-signed state to prevent forgery
+    const stateData = verifyState(state);
+    if (!stateData) {
+      return NextResponse.json(
+        { error: { code: "INVALID_STATE", message: "OAuth state signature invalid or tampered" } },
+        { status: 403 }
+      );
+    }
 
     // Exchange authorization code for tokens
     const tokens = await exchangeCode(code);

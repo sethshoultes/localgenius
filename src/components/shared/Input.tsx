@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, type KeyboardEvent } from 'react';
+import { useState, useRef, useEffect, useCallback, type KeyboardEvent } from 'react';
 
 interface InputProps {
   value: string;
@@ -24,6 +24,18 @@ export default function Input({
   const [isRecording, setIsRecording] = useState(false);
   const [keyboardOffset, setKeyboardOffset] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const resizeRafRef = useRef<number>(0);
+
+  // Debounced resize via rAF — prevents layout thrashing on every keystroke
+  const scheduleResize = useCallback(() => {
+    cancelAnimationFrame(resizeRafRef.current);
+    resizeRafRef.current = requestAnimationFrame(() => {
+      const el = textareaRef.current;
+      if (!el) return;
+      el.style.height = 'auto';
+      el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+    });
+  }, []);
 
   // Use visualViewport API to handle mobile keyboard without hiding input
   useEffect(() => {
@@ -111,10 +123,7 @@ export default function Input({
           value={value}
           onChange={(e) => {
             onChange(e.target.value);
-            if (textareaRef.current) {
-              textareaRef.current.style.height = 'auto';
-              textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
-            }
+            scheduleResize();
           }}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}

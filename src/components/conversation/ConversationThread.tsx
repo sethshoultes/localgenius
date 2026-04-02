@@ -18,6 +18,7 @@ export interface ThreadMessage {
     primaryLabel?: string;
     secondaryLabel?: string;
     status?: 'pending' | 'approved' | 'dismissed' | 'published' | 'scheduled';
+    contentId?: string;
     fields?: { key: string; label: string; value: string; type?: 'text' | 'tel' | 'url' | 'textarea'; placeholder?: string }[];
   };
 }
@@ -25,11 +26,17 @@ export interface ThreadMessage {
 interface ConversationThreadProps {
   messages: ThreadMessage[];
   isLoading?: boolean;
+  onApprove?: (message: ThreadMessage) => void;
+  onEdit?: (message: ThreadMessage) => void;
+  onSettingsSave?: (values: Record<string, string>) => Promise<void>;
 }
 
 export default function ConversationThread({
   messages,
   isLoading = false,
+  onApprove,
+  onEdit,
+  onSettingsSave,
 }: ConversationThreadProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -77,11 +84,11 @@ export default function ConversationThread({
             description={msg.content}
             primaryAction={{
               label: msg.metadata?.primaryLabel ?? 'Approve',
-              onPress: () => {/* TODO: wire to API */},
+              onPress: () => onApprove?.(msg),
             }}
             secondaryAction={{
               label: msg.metadata?.secondaryLabel ?? 'Edit',
-              onPress: () => {/* TODO: wire to edit flow */},
+              onPress: () => onEdit?.(msg),
             }}
             status={msg.metadata?.status ?? 'pending'}
             timestamp={msg.timestamp}
@@ -104,8 +111,9 @@ export default function ConversationThread({
             description={msg.content}
             fields={msg.metadata?.fields ?? []}
             onSave={async (values) => {
-              // TODO: POST to business update endpoint
-              console.log('Settings saved:', values);
+              if (onSettingsSave) {
+                await onSettingsSave(values);
+              }
             }}
             timestamp={msg.timestamp}
           />

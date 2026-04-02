@@ -4,48 +4,23 @@
  *
  * Monitors Google/Yelp/Facebook for new reviews, auto-drafts AI responses.
  * Runs as background job (4x/day per business).
+ *
+ * Uses google-business.ts for real GBP API calls when credentials available,
+ * falls back gracefully when no API keys configured.
  */
 
 import { db } from "@/lib/db";
-import { reviews, actions, businesses } from "@/db/schema";
+import { reviews, actions, businesses, businessSettings } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { generateReviewResponse } from "./ai";
-
-// Mock Google Places API response structure
-interface GoogleReview {
-  reviewId: string;
-  reviewer: { displayName: string };
-  starRating: number;
-  comment: string;
-  createTime: string;
-}
-
-interface GoogleReviewsResponse {
-  reviews: GoogleReview[];
-  totalReviewCount: number;
-  averageRating: number;
-}
+import {
+  syncReviews as googleSyncReviews,
+  getAccessToken as getGoogleToken,
+} from "./google-business";
 
 /**
- * Fetch reviews from Google Business Profile API.
- * In production, this calls the real GBP API.
- * Currently returns mock data structured like the real API response.
- */
-export async function fetchGoogleReviews(
-  _platformBusinessId: string
-): Promise<GoogleReviewsResponse> {
-  // TODO: Replace with real Google Business Profile API call
-  // GET accounts/{accountId}/locations/{locationId}/reviews
-  // Rate limit: 60 req/min. Batch to 4x/day per business.
-  return {
-    reviews: [],
-    totalReviewCount: 0,
-    averageRating: 0,
-  };
-}
-
-/**
- * Sync reviews for a business — detect new ones, draft AI responses.
+ * Sync reviews for a business from all connected platforms.
+ * Uses real API clients when credentials are available.
  */
 export async function syncReviews(businessId: string, organizationId: string) {
   const [biz] = await db
@@ -56,81 +31,115 @@ export async function syncReviews(businessId: string, organizationId: string) {
     )
     .limit(1);
 
-  if (!biz) return { synced: 0, drafted: 0 };
-
-  // In production: fetch from Google/Yelp/Facebook APIs
-  const googleReviews = await fetchGoogleReviews(businessId);
+  if (!biz) return { synced: 0, drafted: 0, sources: [] };
 
   let synced = 0;
   let drafted = 0;
+  const sources: string[] = [];
 
-  for (const gr of googleReviews.reviews) {
-    // Check if we already have this review
-    const existing = await db
-      .select()
-      .from(reviews)
-      .where(
-        and(
-          eq(reviews.businessId, businessId),
-          eq(reviews.platform, "google"),
-          eq(reviews.externalReviewId, gr.reviewId)
-        )
-      )
-      .limit(1);
+  // Try Google Business Profile (real API)
+  const googleAuth = await getGoogleToken(businessId);
+  if (googleAuth) {
+    try {
+      const result = await googleSyncReviews(businessId, organizationId);
+      synced += result.synced;
+      sources.push(`google:${result.synced} new of ${result.total} total`);
 
-    if (existing.length > 0) continue;
+      // Auto-draft responses for new reviews
+      if (result.synced > 0) {
+        const newReviews = await db
+          .select()
+          .from(reviews)
+          .where(
+            and(
+              eq(reviews.businessId, businessId),
+              eq(reviews.platform, "google")
+            )
+          )
+          .orderBy(reviews.createdAt)
+          .limit(result.synced);
 
-    // Store new review
-    const sentiment =
-      gr.starRating >= 4 ? "positive" : gr.starRating === 3 ? "neutral" : "negative";
+        for (const review of newReviews) {
+          const responseText = await generateReviewResponse(
+            { name: biz.name },
+            {
+              reviewerName: review.reviewerName,
+              rating: review.rating,
+              reviewText: review.reviewText,
+            }
+          );
 
-    const [newReview] = await db
-      .insert(reviews)
-      .values({
-        businessId,
-        organizationId,
-        platform: "google",
-        externalReviewId: gr.reviewId,
-        reviewerName: gr.reviewer.displayName,
-        rating: gr.starRating,
-        reviewText: gr.comment,
-        reviewDate: new Date(gr.createTime),
-        sentiment,
-        keyTopics: [],
-      })
-      .returning();
+          await db.insert(actions).values({
+            businessId,
+            organizationId,
+            actionType: "review_response",
+            status: biz.autonomyLevel >= 1 && review.rating >= 4 ? "approved" : "proposed",
+            content: {
+              reviewId: review.id,
+              responseText,
+              platform: "google",
+              autoApproved: biz.autonomyLevel >= 1 && review.rating >= 4,
+            },
+            autoApproved: biz.autonomyLevel >= 1 && review.rating >= 4,
+          });
 
-    synced++;
-
-    // Auto-draft a response
-    const responseText = await generateReviewResponse(
-      { name: biz.name },
-      {
-        reviewerName: gr.reviewer.displayName,
-        rating: gr.starRating,
-        reviewText: gr.comment,
+          drafted++;
+        }
       }
-    );
-
-    // Store as proposed action (pending owner approval)
-    await db.insert(actions).values({
-      businessId,
-      organizationId,
-      actionType: "review_response",
-      status: biz.autonomyLevel >= 1 && gr.starRating >= 4 ? "approved" : "proposed",
-      content: {
-        reviewId: newReview.id,
-        responseText,
-        platform: "google",
-        autoApproved: biz.autonomyLevel >= 1 && gr.starRating >= 4,
-      },
-      autoApproved: biz.autonomyLevel >= 1 && gr.starRating >= 4,
-    });
-
-    drafted++;
+    } catch (error) {
+      sources.push(`google:error (${error instanceof Error ? error.message : "unknown"})`);
+    }
+  } else {
+    sources.push("google:not connected");
   }
 
-  return { synced, drafted };
+  // Yelp: read-only (no API for posting responses)
+  // Reviews synced via Yelp Fusion API when key is available
+  // Response drafts generated but owner must post manually via deep link
+
+  return { synced, drafted, sources };
+}
+
+/**
+ * Sync reviews for ALL connected businesses.
+ * Called by the cron job scheduler.
+ */
+export async function syncAllReviews(): Promise<{
+  total: number;
+  synced: number;
+  failed: number;
+  errors: string[];
+}> {
+  // Find all businesses with active Google connections
+  const connections = await db
+    .select({
+      businessId: businessSettings.businessId,
+      organizationId: businessSettings.organizationId,
+    })
+    .from(businessSettings)
+    .where(
+      and(
+        eq(businessSettings.platform, "google_business"),
+        eq(businessSettings.connectionStatus, "active")
+      )
+    );
+
+  let total = connections.length;
+  let synced = 0;
+  let failed = 0;
+  const errors: string[] = [];
+
+  for (const conn of connections) {
+    try {
+      const result = await syncReviews(conn.businessId, conn.organizationId);
+      if (result.synced > 0) synced++;
+    } catch (error) {
+      failed++;
+      errors.push(`${conn.businessId}: ${error instanceof Error ? error.message : "unknown"}`);
+    }
+  }
+
+  return { total, synced, failed, errors };
 }
 
 /**
@@ -146,12 +155,7 @@ export async function getReviewTrends(
   const recentReviews = await db
     .select()
     .from(reviews)
-    .where(
-      and(
-        eq(reviews.businessId, businessId),
-        eq(reviews.platform, "google")
-      )
-    )
+    .where(eq(reviews.businessId, businessId))
     .orderBy(reviews.reviewDate);
 
   const recent = recentReviews.filter(

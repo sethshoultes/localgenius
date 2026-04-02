@@ -9,6 +9,9 @@ import {
   getConversation,
   createConversation,
   streamMessage,
+  publishContent,
+  sendMessage,
+  getToken,
   type Message,
   ApiError,
 } from '@/lib/api';
@@ -152,6 +155,55 @@ export default function ThreadPage() {
     }
   };
 
+  const handleApprove = useCallback(
+    async (msg: ThreadMessage) => {
+      if (!conversationId) return;
+      try {
+        if (msg.metadata?.contentId) {
+          await publishContent(msg.metadata.contentId);
+        } else {
+          await sendMessage(conversationId, `Approved: ${msg.metadata?.title ?? msg.content}`);
+        }
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === msg.id
+              ? { ...m, metadata: { ...m.metadata, status: 'approved' as const } }
+              : m,
+          ),
+        );
+      } catch {
+        setError('Failed to approve. Please try again.');
+      }
+    },
+    [conversationId],
+  );
+
+  const handleEdit = useCallback(
+    (msg: ThreadMessage) => {
+      setInputValue(msg.content);
+    },
+    [],
+  );
+
+  const handleSettingsSave = useCallback(
+    async (values: Record<string, string>) => {
+      try {
+        const token = getToken();
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        const res = await fetch('/api/onboarding', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ step: 'confirm', data: values }),
+        });
+        if (!res.ok) throw new Error('Request failed');
+      } catch {
+        setError('Failed to save settings. Please try again.');
+      }
+    },
+    [],
+  );
+
   const displayMessages = [...messages];
   if (streamingContent) {
     displayMessages.push({
@@ -179,6 +231,9 @@ export default function ThreadPage() {
       <ConversationThread
         messages={displayMessages}
         isLoading={isLoading && !streamingContent}
+        onApprove={handleApprove}
+        onEdit={handleEdit}
+        onSettingsSave={handleSettingsSave}
       />
 
       {/* Spacer for fixed input bar */}

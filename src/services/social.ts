@@ -4,20 +4,28 @@
  *
  * Generates and publishes social content to Instagram + Facebook.
  * Includes "Posted by LocalGenius" watermark per product-led growth strategy.
+ *
+ * Uses meta-social.ts for real Meta Graph API calls when credentials available,
+ * falls back to mock for development without API keys.
  */
 
 import { db } from "@/lib/db";
-import { actions, contentItems, businesses } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { actions, contentItems, businesses, businessSettings } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
 import { generateSocialPost } from "./ai";
+import {
+  publishToFacebook,
+  publishToInstagram,
+  getAccessToken as getMetaToken,
+} from "./meta-social";
 
-// Mock Meta Graph API response structure
-interface MetaPostResult {
+interface PostResult {
   id: string;
   postUrl: string;
   platform: "instagram" | "facebook";
   success: boolean;
   error?: string;
+  live: boolean; // true = real API call, false = mock
 }
 
 const WATERMARK = "\n\nPosted by LocalGenius";
@@ -50,30 +58,70 @@ export async function generatePost(
 }
 
 /**
- * Publish a post to Instagram or Facebook via Meta Graph API.
- * Currently mocked — returns structured response matching the real API.
+ * Publish a post to Instagram or Facebook.
+ * Uses real Meta Graph API when credentials are available,
+ * falls back to mock for development.
  */
 export async function publishPost(
+  businessId: string,
   platform: "instagram" | "facebook",
-  content: { text: string; imageUrl?: string },
-  _credentials: { accessToken: string; pageId: string }
-): Promise<MetaPostResult> {
-  // TODO: Replace with real Meta Graph API calls
-  // Instagram: POST /{ig-user-id}/media → POST /{ig-user-id}/media_publish
-  // Facebook: POST /{page-id}/feed
-  // Rate limit: 200 calls/user/hour
+  content: { text: string; imageUrl?: string }
+): Promise<PostResult> {
+  // Check if business has Meta credentials
+  const metaAuth = await getMetaToken(businessId);
 
-  // Mock successful response
-  const mockId = `mock_${platform}_${Date.now()}`;
+  if (metaAuth) {
+    // Real Meta API call
+    try {
+      if (platform === "instagram" && content.imageUrl) {
+        const result = await publishToInstagram(businessId, {
+          text: content.text,
+          imageUrl: content.imageUrl,
+        });
+        return {
+          id: result.id,
+          postUrl: `https://instagram.com/p/${result.id}`,
+          platform: "instagram",
+          success: result.success,
+          error: result.error,
+          live: true,
+        };
+      } else {
+        const result = await publishToFacebook(businessId, {
+          text: content.text,
+          imageUrl: content.imageUrl,
+        });
+        return {
+          id: result.id,
+          postUrl: `https://facebook.com/${result.id}`,
+          platform: "facebook",
+          success: result.success,
+          error: result.error,
+          live: true,
+        };
+      }
+    } catch (error) {
+      return {
+        id: "",
+        postUrl: "",
+        platform,
+        success: false,
+        error: error instanceof Error ? error.message : "Publishing failed",
+        live: true,
+      };
+    }
+  }
 
+  // No credentials — mock for development
+  const mockId = `dev_${platform}_${Date.now()}`;
   return {
     id: mockId,
-    postUrl:
-      platform === "instagram"
-        ? `https://instagram.com/p/${mockId}`
-        : `https://facebook.com/post/${mockId}`,
+    postUrl: platform === "instagram"
+      ? `https://instagram.com/p/${mockId}`
+      : `https://facebook.com/post/${mockId}`,
     platform,
     success: true,
+    live: false,
   };
 }
 
@@ -119,15 +167,10 @@ export async function createAndPublishPost(
     })
     .returning();
 
-  let publishResult: MetaPostResult | null = null;
+  let publishResult: PostResult | null = null;
 
   if (autoPublish) {
-    // In production: retrieve credentials from business_settings
-    publishResult = await publishPost(
-      platform,
-      { text: post.text },
-      { accessToken: "mock", pageId: "mock" }
-    );
+    publishResult = await publishPost(businessId, platform, { text: post.text });
 
     if (publishResult.success) {
       await db
@@ -146,5 +189,6 @@ export async function createAndPublishPost(
     action,
     published: publishResult?.success || false,
     postUrl: publishResult?.postUrl || null,
+    live: publishResult?.live || false,
   };
 }

@@ -1,7 +1,10 @@
 /**
  * Demo seed script — creates Maria's Kitchen with rich, realistic sample data.
- * Run: pnpm db:seed
+ * Run: npm run db:seed
  */
+
+import { config } from "dotenv";
+config({ path: ".env.local" });
 
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";

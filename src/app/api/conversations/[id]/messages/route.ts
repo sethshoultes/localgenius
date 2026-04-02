@@ -81,7 +81,7 @@ export async function POST(
               role: "assistant",
               contentType: "text",
               content: { text: fullContent },
-              aiModel: "claude-sonnet-4-6-20250514",
+              aiModel: "claude-sonnet-4-20250514",
             }).returning();
 
             // Send the complete message object
@@ -132,7 +132,7 @@ export async function POST(
       role: "assistant",
       contentType: "text",
       content: { text: aiResponse },
-      aiModel: "claude-sonnet-4-6-20250514",
+      aiModel: "claude-sonnet-4-20250514",
     }).returning();
 
     return NextResponse.json({ data: { ownerMessage: ownerMsg, assistantMessage: assistantMsg }, meta: { timestamp: new Date().toISOString() } }, { status: 201 });

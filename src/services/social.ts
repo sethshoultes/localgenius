@@ -145,7 +145,7 @@ export async function createAndPublishPost(
       organizationId,
       contentType: "social_post",
       content: { text: post.text, platform: post.platform },
-      aiModel: "claude-sonnet-4-6-20250514",
+      aiModel: "claude-sonnet-4-20250514",
     })
     .returning();
 

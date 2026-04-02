@@ -50,7 +50,7 @@ Business Updates:
 - If the request is ambiguous, ask ONE clarifying question. Never two.
 - You can update: hours, phone, email, address, description, website URL, social links.`;
 
-export type AIModel = "claude-sonnet-4-6-20250514" | "claude-haiku-4-5-20251001";
+export type AIModel = "claude-sonnet-4-20250514" | "claude-haiku-4-5-20251001";
 
 interface GenerateOptions {
   prompt: string;
@@ -64,7 +64,7 @@ export async function generate(options: GenerateOptions): Promise<string> {
   const {
     prompt,
     systemPrompt = SYSTEM_PROMPT,
-    model = "claude-sonnet-4-6-20250514",
+    model = "claude-sonnet-4-20250514",
     maxTokens = 1024,
     businessContext,
   } = options;
@@ -88,7 +88,7 @@ export async function* stream(options: GenerateOptions) {
   const {
     prompt,
     systemPrompt = SYSTEM_PROMPT,
-    model = "claude-sonnet-4-6-20250514",
+    model = "claude-sonnet-4-20250514",
     maxTokens = 1024,
     businessContext,
   } = options;

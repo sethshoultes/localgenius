@@ -84,7 +84,7 @@ export const TEST_MESSAGE_ASSISTANT = {
   role: "assistant",
   contentType: "text",
   content: { text: "Here is a suggested response for your review..." },
-  aiModel: "claude-sonnet-4-6-20250514",
+  aiModel: "claude-sonnet-4-20250514",
   tokensInput: 100,
   tokensOutput: 50,
   createdAt: new Date("2025-01-02"),
@@ -146,7 +146,7 @@ export const TEST_CONTENT_ITEM = {
   version: 1,
   approved: false,
   performance: null,
-  aiModel: "claude-sonnet-4-6-20250514",
+  aiModel: "claude-sonnet-4-20250514",
   tokensUsed: null,
   createdAt: new Date("2025-01-01"),
 };

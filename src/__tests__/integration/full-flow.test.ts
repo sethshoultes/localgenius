@@ -340,7 +340,7 @@ describe("Integration: Conversation with AI", () => {
     expect(sendBody.data.ownerMessage.content).toEqual({ text: "How should I respond to this review?" });
     expect(sendBody.data.assistantMessage).toBeDefined();
     expect(sendBody.data.assistantMessage.role).toBe("assistant");
-    expect(sendBody.data.assistantMessage.aiModel).toBe("claude-sonnet-4-6-20250514");
+    expect(sendBody.data.assistantMessage.aiModel).toBe("claude-sonnet-4-20250514");
     expect(sendBody.meta.timestamp).toBeDefined();
 
     // Verify two insert calls were made (owner message + assistant message)
@@ -455,7 +455,7 @@ describe("Integration: Content generation pipeline", () => {
     expect(body.data.contentItem.content.text).toBe(MOCK_SOCIAL_POST);
     expect(body.data.contentItem.content.platform).toBe("instagram");
     expect(body.data.contentItem.content.topic).toBe("weekly specials");
-    expect(body.data.contentItem.aiModel).toBe("claude-sonnet-4-6-20250514");
+    expect(body.data.contentItem.aiModel).toBe("claude-sonnet-4-20250514");
 
     // Verify action was created with proposed status
     expect(body.data.action).toBeDefined();

@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     const [content] = await db.insert(contentItems).values({
       businessId: auth.businessId, organizationId: auth.organizationId,
       contentType: validated.type, content: { text: generatedText, platform: validated.platform, topic: validated.topic },
-      aiModel: "claude-sonnet-4-6-20250514",
+      aiModel: "claude-sonnet-4-20250514",
     }).returning();
 
     const actionType = validated.type === "email_campaign" ? "email_campaign" as const : validated.type === "review_response" ? "review_response" as const : "social_post" as const;

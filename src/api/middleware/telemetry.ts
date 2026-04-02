@@ -124,7 +124,7 @@ export function withTelemetry(handler: RouteHandler): RouteHandler {
  *
  * Usage:
  *   const result = await generate({ prompt });
- *   reportAIMetrics({ durationMs: 1200, tokensInput: 500, tokensOutput: 200, model: "claude-sonnet-4-6-20250514" });
+ *   reportAIMetrics({ durationMs: 1200, tokensInput: 500, tokensOutput: 200, model: "claude-sonnet-4-20250514" });
  */
 export function reportAIMetrics(m: AIMetrics): void {
   const attrs: Attributes = { "ai.generation.model": m.model };

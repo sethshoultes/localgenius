@@ -70,7 +70,7 @@ export async function schedule(input: ScheduleInput): Promise<ScheduleResult> {
       organizationId: input.organizationId,
       contentType: "social_post",
       content: postContent,
-      aiModel: "claude-sonnet-4-6-20250514",
+      aiModel: "claude-sonnet-4-20250514",
       approved: true,
     })
     .returning();

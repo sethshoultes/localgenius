@@ -22,7 +22,7 @@ import { eq, and, gte, sql } from "drizzle-orm";
 
 // Anthropic pricing (per million tokens)
 const PRICING = {
-  "claude-sonnet-4-6-20250514": { input: 3.0, output: 15.0 },
+  "claude-sonnet-4-20250514": { input: 3.0, output: 15.0 },
   "claude-haiku-4-5-20251001": { input: 0.25, output: 1.25 },
 } as const;
 
@@ -78,8 +78,8 @@ export async function getUsage(businessId: string): Promise<UsageData> {
     );
 
   const sonnetCost =
-    (Number(usage?.sonnetInput || 0) / 1_000_000) * PRICING["claude-sonnet-4-6-20250514"].input +
-    (Number(usage?.sonnetOutput || 0) / 1_000_000) * PRICING["claude-sonnet-4-6-20250514"].output;
+    (Number(usage?.sonnetInput || 0) / 1_000_000) * PRICING["claude-sonnet-4-20250514"].input +
+    (Number(usage?.sonnetOutput || 0) / 1_000_000) * PRICING["claude-sonnet-4-20250514"].output;
 
   const haikuCost =
     (Number(usage?.haikuInput || 0) / 1_000_000) * PRICING["claude-haiku-4-5-20251001"].input +
@@ -122,7 +122,7 @@ export async function getUsage(businessId: string): Promise<UsageData> {
       : null,
     // NEVER degrade model quality. Power users are our best users.
     // The cost ceiling is tracked for business health, not enforced on the user.
-    model: "claude-sonnet-4-6-20250514",
+    model: "claude-sonnet-4-20250514",
   };
 }
 
@@ -137,10 +137,10 @@ export async function getUsage(businessId: string): Promise<UsageData> {
 export async function getModel(
   businessId: string,
   batch: boolean = false
-): Promise<"claude-sonnet-4-6-20250514" | "claude-haiku-4-5-20251001"> {
+): Promise<"claude-sonnet-4-20250514" | "claude-haiku-4-5-20251001"> {
   // Batch operations (digest gen, analytics, SEO) use Haiku for cost efficiency
   // User-facing operations (conversation, content, reviews) ALWAYS use Sonnet
-  return batch ? "claude-haiku-4-5-20251001" : "claude-sonnet-4-6-20250514";
+  return batch ? "claude-haiku-4-5-20251001" : "claude-sonnet-4-20250514";
 }
 
 /**

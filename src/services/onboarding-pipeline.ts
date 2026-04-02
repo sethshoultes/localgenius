@@ -146,7 +146,7 @@ Don't say "AI" or "platform". Be warm, confident, specific to their business typ
       role: "assistant",
       contentType: "text",
       content: { text: welcomeText },
-      aiModel: "claude-sonnet-4-6-20250514",
+      aiModel: "claude-sonnet-4-20250514",
     });
 
     result.welcomeMessageSent = true;

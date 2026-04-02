@@ -4,10 +4,11 @@ import { db } from "@/lib/db";
 import { conversations, messages, businesses } from "@/db/schema";
 import { eq, and, desc, lt } from "drizzle-orm";
 import { verifyAuth } from "@/api/middleware/auth";
-import { generate } from "@/services/ai";
+import { generate, stream } from "@/services/ai";
 
 const sendMessageSchema = z.object({
   content: z.string().min(1).max(10000),
+  stream: z.boolean().optional(),
 });
 
 export async function POST(
@@ -52,13 +53,78 @@ export async function POST(
       .map((m) => `${m.role}: ${(m.content as { text?: string })?.text || ""}`)
       .join("\n");
 
-    // Generate AI response via Anthropic Claude
+    const prompt = `Previous conversation:\n${historyText}\n\nOwner's latest message: "${validated.content}"\n\nRespond helpfully as LocalGenius, their AI marketing assistant.`;
+    const businessContext = biz ? { name: biz.name, vertical: biz.vertical, city: biz.city, state: biz.state } : undefined;
+
+    // SSE streaming mode — delivers typewriter effect to frontend
+    if (validated.stream || request.headers.get("accept") === "text/event-stream") {
+      const encoder = new TextEncoder();
+      let fullContent = "";
+
+      const readable = new ReadableStream({
+        async start(controller) {
+          try {
+            const chunks = stream({ prompt, businessContext });
+
+            for await (const chunk of chunks) {
+              fullContent += chunk;
+              controller.enqueue(
+                encoder.encode(`data: ${JSON.stringify({ chunk })}\n\n`)
+              );
+            }
+
+            // Store the complete assistant message
+            const [assistantMsg] = await db.insert(messages).values({
+              conversationId,
+              businessId: auth.businessId,
+              organizationId: auth.organizationId,
+              role: "assistant",
+              contentType: "text",
+              content: { text: fullContent },
+              aiModel: "claude-sonnet-4-6-20250514",
+            }).returning();
+
+            // Send the complete message object
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({
+                message: {
+                  id: assistantMsg.id,
+                  conversationId,
+                  role: "assistant",
+                  content: fullContent,
+                  type: "text",
+                  createdAt: assistantMsg.createdAt?.toISOString(),
+                },
+              })}\n\n`)
+            );
+            controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+            controller.close();
+          } catch (error) {
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({
+                error: error instanceof Error ? error.message : "Stream failed",
+              })}\n\n`)
+            );
+            controller.close();
+          }
+        },
+      });
+
+      return new Response(readable, {
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive",
+        },
+      });
+    }
+
+    // Non-streaming fallback
     const aiResponse = await generate({
-      prompt: `Previous conversation:\n${historyText}\n\nOwner's latest message: "${validated.content}"\n\nRespond helpfully as LocalGenius, their AI marketing assistant.`,
-      businessContext: biz ? { name: biz.name, vertical: biz.vertical, city: biz.city, state: biz.state } : undefined,
+      prompt,
+      businessContext,
     });
 
-    // Store assistant message
     const [assistantMsg] = await db.insert(messages).values({
       conversationId,
       businessId: auth.businessId,

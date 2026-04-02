@@ -429,4 +429,28 @@ export async function completeOnboarding(
   return uploadForm<{ conversationId: string }>('/onboarding', data);
 }
 
+// Website
+export interface GeneratedWebsite {
+  site: {
+    html: string;
+    metadata: { title: string; description: string; generatedAt: string };
+    previewUrl: string;
+  };
+}
+
+export async function generateWebsite(
+  description?: string,
+  photos?: string[],
+  hours?: Record<string, string>,
+): Promise<GeneratedWebsite> {
+  return request<GeneratedWebsite>('/website/generate', {
+    method: 'POST',
+    body: JSON.stringify({ description, photos, hours }),
+  });
+}
+
+export function getWebsitePreviewUrl(businessId: string): string {
+  return `${API_BASE}/website/${businessId}`;
+}
+
 export { ApiError, getToken, clearToken };

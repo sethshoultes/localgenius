@@ -6,9 +6,11 @@ import Button from '@/components/shared/Button';
 import {
   discoverBusiness,
   generateReveal,
+  generateWebsite,
   completeOnboarding,
   type DiscoveryResult,
   type RevealData,
+  type GeneratedWebsite,
 } from '@/lib/api';
 
 type Step = 1 | 2 | 3 | 4 | 5;
@@ -92,6 +94,8 @@ export default function OnboardingPage() {
   const [validationError, setValidationError] = useState('');
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishedAll, setPublishedAll] = useState(false);
+  const [websiteHtml, setWebsiteHtml] = useState<string | null>(null);
+  const [websitePreviewUrl, setWebsitePreviewUrl] = useState<string | null>(null);
 
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -187,18 +191,28 @@ export default function OnboardingPage() {
     goTo(4);
     setIsGenerating(true);
 
-    try {
-      const result = await generateReveal(
-        state.businessName,
-        state.businessType,
-        state.description,
-      );
-      setState((s) => ({ ...s, reveal: result }));
-    } catch {
-      setState((s) => ({ ...s, reveal: MOCK_REVEAL }));
-    } finally {
-      setIsGenerating(false);
+    // Run reveal generation and website generation in parallel
+    const revealPromise = generateReveal(
+      state.businessName,
+      state.businessType,
+      state.description,
+    ).catch(() => null);
+
+    const websitePromise = generateWebsite(
+      state.description,
+      state.photoPreviews, // URLs of uploaded photos
+    ).catch(() => null);
+
+    const [revealResult, websiteResult] = await Promise.all([revealPromise, websitePromise]);
+
+    setState((s) => ({ ...s, reveal: revealResult || MOCK_REVEAL }));
+
+    if (websiteResult) {
+      setWebsiteHtml(websiteResult.site.html);
+      setWebsitePreviewUrl(websiteResult.site.previewUrl);
     }
+
+    setIsGenerating(false);
   };
 
   // Step 4 priority select → Step 5
@@ -588,13 +602,13 @@ export default function OnboardingPage() {
                 <>
                   <h1 className="animate-in">Here&apos;s what I built for you.</h1>
 
-                  {/* Website — designed to look like a real site preview */}
+                  {/* Website — real preview via iframe or styled fallback */}
                   <div className="card animate-in reveal-stagger-1 flex flex-col gap-card-gap">
                     <span className="text-caption text-slate uppercase tracking-widest font-semibold">
                       Your Website
                     </span>
                     <div className="rounded-md overflow-hidden border" style={{ borderColor: 'var(--border-default)' }}>
-                      {/* Fake browser chrome */}
+                      {/* Browser chrome */}
                       <div className="bg-cream px-3 py-2 flex items-center gap-2 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
                         <div className="flex gap-1.5">
                           <div className="w-2.5 h-2.5 rounded-full bg-slate-light/40" />
@@ -605,52 +619,74 @@ export default function OnboardingPage() {
                           {state.businessName.toLowerCase().replace(/[^a-z0-9]/g, '')}atx.com
                         </div>
                       </div>
-                      {/* Site preview */}
-                      <div className="bg-warm-white">
-                        {/* Hero with photo */}
-                        {state.photoPreviews[0] ? (
-                          <div className="relative h-40 overflow-hidden">
-                            <img src={state.photoPreviews[0]} alt="" className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-charcoal/70 to-transparent" />
-                            <div className="absolute bottom-0 left-0 right-0 p-4">
-                              <h3 className="text-h2 text-white font-semibold">{state.businessName}</h3>
-                              <p className="text-caption text-white/80">
-                                {state.reveal?.tagline || MOCK_REVEAL.tagline}
-                              </p>
+
+                      {/* Real generated site in sandboxed iframe */}
+                      {websiteHtml ? (
+                        <iframe
+                          srcDoc={websiteHtml}
+                          title={`${state.businessName} website preview`}
+                          className="w-full border-0"
+                          style={{ height: '300px', pointerEvents: 'none' }}
+                          sandbox="allow-same-origin"
+                          loading="eager"
+                        />
+                      ) : (
+                        /* Styled fallback when API isn't available */
+                        <div className="bg-warm-white">
+                          {state.photoPreviews[0] ? (
+                            <div className="relative h-40 overflow-hidden">
+                              <img src={state.photoPreviews[0]} alt="" className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-gradient-to-t from-charcoal/70 to-transparent" />
+                              <div className="absolute bottom-0 left-0 right-0 p-4">
+                                <h3 className="text-h2 text-white font-semibold">{state.businessName}</h3>
+                                <p className="text-caption text-white/80">
+                                  {state.reveal?.tagline || MOCK_REVEAL.tagline}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                        ) : (
-                          <div className="h-40 bg-cream flex items-center justify-center">
-                            <h3 className="text-h1 text-charcoal">{state.businessName}</h3>
-                          </div>
-                        )}
-                        {/* Content preview */}
-                        <div className="p-4 flex flex-col gap-3">
-                          <p className="text-caption text-charcoal leading-relaxed">
-                            {state.reveal?.businessDescription || MOCK_REVEAL.businessDescription}
-                          </p>
-                          <div className="flex gap-2">
-                            <div className="flex-1 bg-terracotta text-white text-small text-center py-2 rounded-sm font-semibold">
-                              Book a Table
-                            </div>
-                            <div className="flex-1 bg-cream text-charcoal text-small text-center py-2 rounded-sm">
-                              View Menu
-                            </div>
-                          </div>
-                          {state.discovery?.googleRating && (
-                            <div className="flex items-center gap-1 text-small text-slate">
-                              <span className="text-gold">★</span>
-                              {state.discovery.googleRating} · {state.discovery.reviewCount} reviews
+                          ) : (
+                            <div className="h-40 bg-cream flex items-center justify-center">
+                              <h3 className="text-h1 text-charcoal">{state.businessName}</h3>
                             </div>
                           )}
+                          <div className="p-4 flex flex-col gap-3">
+                            <p className="text-caption text-charcoal leading-relaxed">
+                              {state.reveal?.businessDescription || MOCK_REVEAL.businessDescription}
+                            </p>
+                            <div className="flex gap-2">
+                              <div className="flex-1 bg-terracotta text-white text-small text-center py-2 rounded-sm font-semibold">
+                                Book a Table
+                              </div>
+                              <div className="flex-1 bg-cream text-charcoal text-small text-center py-2 rounded-sm">
+                                View Menu
+                              </div>
+                            </div>
+                            {state.discovery?.googleRating && (
+                              <div className="flex items-center gap-1 text-small text-slate">
+                                <span className="text-gold">★</span>
+                                {state.discovery.googleRating} · {state.discovery.reviewCount} reviews
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                     <p className="text-caption text-terracotta">
                       {state.businessName.toLowerCase().replace(/[^a-z0-9]/g, '')}atx.com — live now
                     </p>
                     <div className="flex gap-3">
-                      <div className="flex-[3]"><Button variant="primary" label="View Site" fullWidth onClick={() => {}} /></div>
+                      <div className="flex-[3]">
+                        <Button
+                          variant="primary"
+                          label="View Site"
+                          fullWidth
+                          onClick={() => {
+                            if (websitePreviewUrl) {
+                              window.open(websitePreviewUrl, '_blank');
+                            }
+                          }}
+                        />
+                      </div>
                       <div className="flex-[2]"><Button variant="secondary" label="Edit" fullWidth onClick={() => {}} /></div>
                     </div>
                   </div>

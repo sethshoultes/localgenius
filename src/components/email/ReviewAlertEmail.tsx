@@ -113,8 +113,8 @@ export function ReviewAlertEmail({
                       LocalGenius &middot; Review alerts for {businessName}
                     </p>
                     <p style={styles.footerText}>
-                      You're getting this because a review rated 3 stars or
-                      below was detected. Reply to this email with questions.
+                      You're getting this because I noticed a review rated 3 stars or
+                      below. Reply to this email with questions.
                     </p>
                   </td>
                 </tr>

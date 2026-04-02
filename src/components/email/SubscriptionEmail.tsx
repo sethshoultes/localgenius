@@ -8,8 +8,8 @@ interface SubscriptionEmailProps {
 
 export function SubscriptionEmail({ businessName, plan, amount }: SubscriptionEmailProps) {
   const features = plan === "pro"
-    ? ["Conversational command center", "AI website generation", "Review auto-responses", "Social media posting", "Email & SMS campaigns", "Local SEO agent", "Weekly digest + benchmarks", "Priority support"]
-    : ["Conversational command center", "AI website generation", "Review auto-responses", "Social media posting", "Weekly digest"];
+    ? ["One conversation for everything", "Professional website, built in minutes", "Review responses drafted for you", "Social media posting", "Email & SMS campaigns", "Google listing, handled", "Weekly digest + benchmarks", "Priority support"]
+    : ["One conversation for everything", "Professional website, built in minutes", "Review responses drafted for you", "Social media posting", "Weekly digest"];
 
   return (
     <div style={{ fontFamily: "'Source Sans 3', system-ui, sans-serif", backgroundColor: "#FAF8F5", padding: "40px 20px" }}>

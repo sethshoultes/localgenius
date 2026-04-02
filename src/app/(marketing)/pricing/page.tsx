@@ -15,7 +15,7 @@ const BASE_FEATURES = [
   { text: 'Review management with draft responses', included: true },
   { text: 'Social posting (Instagram + Facebook)', included: true },
   { text: 'Weekly Digest every Monday', included: true },
-  { text: 'One-tap approval for all content', included: true },
+  { text: 'One-tap approval for every post and response', included: true },
   { text: 'Google Business Profile optimization', included: false, proOnly: true },
   { text: 'Email & SMS campaigns', included: false, proOnly: true },
   { text: 'Lead attribution (tracking number)', included: false, proOnly: true },
@@ -166,7 +166,7 @@ export default function PricingPage() {
               <h3 className="text-h2 text-charcoal">What&apos;s the difference between Base and Pro?</h3>
               <p className="text-body text-slate mt-2">
                 Base handles your website, reviews, and social posts — the essentials. Pro adds email campaigns,
-                local SEO optimization, a tracking number so you know exactly which customers came from LocalGenius,
+                local SEO improvements, a tracking number so you know exactly which customers came from LocalGenius,
                 and competitive benchmarking against nearby businesses.
               </p>
             </div>

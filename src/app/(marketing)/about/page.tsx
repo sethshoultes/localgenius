@@ -38,10 +38,10 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* The Solution */}
+      {/* What we built */}
       <section className="px-screen-margin py-12 bg-cream">
         <div className="max-w-[720px] mx-auto">
-          <h2 className="text-h1 text-charcoal mb-6">The Solution</h2>
+          <h2 className="text-h1 text-charcoal mb-6">What we built</h2>
           <div className="flex flex-col gap-4 text-body text-slate leading-relaxed">
             <p>
               LocalGenius is the employee Maria always needed but could never afford.
@@ -83,7 +83,7 @@ export default function AboutPage() {
           <p>
             We eat at Austin restaurants every Friday. Not just for lunch —
             to notice the owner behind the counter, the Google listing on the door,
-            the Instagram handle on the receipt. That&apos;s our user. We know them.
+            the Instagram handle on the receipt. That&apos;s who we build for. We know them.
           </p>
         </div>
 

@@ -140,7 +140,7 @@ export default function ConversationThread({
           <PublishedCard
             key={msg.id}
             platform={msg.metadata?.platform ?? 'instagram'}
-            title={msg.metadata?.title ?? 'Content published'}
+            title={msg.metadata?.title ?? 'Post published'}
             preview={msg.content}
             postUrl={msg.metadata?.postUrl}
             timestamp={msg.timestamp}

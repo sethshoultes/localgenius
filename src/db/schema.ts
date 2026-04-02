@@ -606,6 +606,29 @@ export const scheduledPosts = pgTable(
 // Tracked competitors for each business. Stores current + previous snapshot
 // for delta calculation in Weekly Digest competitor comparisons.
 
+// ─── Insight Actions ─────────────────────────────────────────────────────────
+// Persists insight tracking (acted/dismissed). Replaces in-memory Map.
+// Jensen Issue #6: state was lost on every restart.
+
+export const insightActions = pgTable(
+  "insight_actions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    insightId: text("insight_id").notNull(),
+    businessId: uuid("business_id")
+      .notNull()
+      .references(() => businesses.id),
+    action: text("action").notNull(), // "acted" | "dismissed"
+    actedAt: timestamp("acted_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("idx_insight_actions_business").on(table.businessId),
+    uniqueIndex("idx_insight_actions_unique").on(table.insightId, table.businessId),
+  ]
+);
+
 export const competitors = pgTable(
   "competitors",
   {

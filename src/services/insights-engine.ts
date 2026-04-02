@@ -18,6 +18,7 @@ import {
   analyticsEvents,
   attributionEvents,
   competitors,
+  insightActions,
 } from "@/db/schema";
 import { eq, and, gte, desc, sql } from "drizzle-orm";
 import { generate } from "./ai";
@@ -521,24 +522,45 @@ Write ONE specific, actionable recommendation (2 sentences max). Be warm and dir
   }
 }
 
-// ─── Insight Tracking ─────────────────────────────────────────────────────────
-
-// In-memory tracking for v1. Upgrade to database table for persistence.
-const insightActions = new Map<string, { action: "acted" | "dismissed"; at: string }>();
+// ─── Insight Tracking (Database-Backed) ──────────────────────────────────────
+// Jensen Issue #6: replaced in-memory Map with database persistence.
+// State now survives restarts and scales across instances.
 
 /**
- * Mark an insight as acted-on or dismissed.
+ * Mark an insight as acted-on or dismissed. Persists to database.
  */
-export function trackInsightAction(
+export async function trackInsightAction(
   insightId: string,
+  businessId: string,
   action: "acted" | "dismissed"
-) {
-  insightActions.set(insightId, { action, at: new Date().toISOString() });
+): Promise<void> {
+  await db
+    .insert(insightActions)
+    .values({
+      insightId,
+      businessId,
+      action,
+      actedAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: [insightActions.insightId, insightActions.businessId],
+      set: { action, actedAt: new Date() },
+    });
 }
 
 /**
- * Get insight action history.
+ * Get insight action history for a business.
  */
-export function getInsightHistory(): Map<string, { action: "acted" | "dismissed"; at: string }> {
-  return insightActions;
+export async function getInsightHistory(
+  businessId: string
+): Promise<Array<{ insightId: string; action: string; actedAt: Date }>> {
+  return db
+    .select({
+      insightId: insightActions.insightId,
+      action: insightActions.action,
+      actedAt: insightActions.actedAt,
+    })
+    .from(insightActions)
+    .where(eq(insightActions.businessId, businessId))
+    .orderBy(desc(insightActions.actedAt));
 }

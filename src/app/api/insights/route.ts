@@ -26,11 +26,11 @@ export async function GET(request: NextRequest) {
     const insights = await generateInsights(auth.businessId, auth.organizationId);
 
     // Filter out dismissed insights
-    const history = getInsightHistory();
-    const filtered = insights.filter((i) => {
-      const action = history.get(i.id);
-      return !action || action.action !== "dismissed";
-    });
+    const history = await getInsightHistory(auth.businessId);
+    const dismissedIds = new Set(
+      history.filter((h) => h.action === "dismissed").map((h) => h.insightId)
+    );
+    const filtered = insights.filter((i) => !dismissedIds.has(i.id));
 
     return NextResponse.json({
       data: {
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validated = trackSchema.parse(body);
 
-    trackInsightAction(validated.insightId, validated.action);
+    await trackInsightAction(validated.insightId, auth.businessId, validated.action);
 
     return NextResponse.json({
       data: {

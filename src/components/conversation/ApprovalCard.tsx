@@ -12,6 +12,9 @@ interface ApprovalCardProps {
   title: string;
   description: string;
   preview?: React.ReactNode;
+  imageUrl?: string;
+  imageLoading?: boolean;
+  onSwapImage?: () => void;
   primaryAction: { label: string; onPress: () => void };
   secondaryAction: { label: string; onPress: () => void };
   status?: ApprovalStatus;
@@ -27,6 +30,9 @@ export default function ApprovalCard({
   title,
   description,
   preview,
+  imageUrl,
+  imageLoading = false,
+  onSwapImage,
   primaryAction,
   secondaryAction,
   status: initialStatus = 'pending',
@@ -128,6 +134,38 @@ export default function ApprovalCard({
 
       {preview && (
         <div className="rounded-sm overflow-hidden">{preview}</div>
+      )}
+
+      {/* AI-generated image preview */}
+      {(imageUrl || imageLoading) && (
+        <div className="rounded-sm overflow-hidden relative">
+          {imageLoading ? (
+            <div
+              className="aspect-square bg-cream flex items-center justify-center"
+              aria-label="Creating your photo"
+            >
+              <div className="loading-glow w-full h-full absolute inset-0" />
+              <span className="text-caption text-slate relative z-10">Creating your photo...</span>
+            </div>
+          ) : imageUrl ? (
+            <>
+              <img
+                src={imageUrl}
+                alt={title}
+                className="w-full aspect-square object-cover"
+                style={{ animation: 'fadeUp 300ms cubic-bezier(0, 0, 0.2, 1) both' }}
+              />
+              {onSwapImage && status === 'pending' && (
+                <button
+                  onClick={onSwapImage}
+                  className="absolute bottom-2 right-2 px-3 py-1.5 bg-charcoal/60 text-white text-small font-semibold rounded-sm backdrop-blur-sm hover:bg-charcoal/80 transition-colors"
+                >
+                  Swap photo
+                </button>
+              )}
+            </>
+          ) : null}
+        </div>
       )}
 
       {/* Error state */}

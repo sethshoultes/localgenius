@@ -245,7 +245,7 @@ export default function OnboardingPage() {
     setPublishedAll(true);
     tapCelebrate();
     setTimeout(() => {
-      router.push('/');
+      router.push('/app');
     }, 3500); // Extra time for the celebration to land
   };
 

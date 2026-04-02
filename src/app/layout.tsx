@@ -4,8 +4,29 @@ import '@/styles/globals.css';
 export const metadata: Metadata = {
   title: 'LocalGenius — Your business, handled.',
   description:
-    'The employee you always needed but could never afford. LocalGenius handles your website, reviews, social posts, and marketing — you just approve.',
+    'The AI employee that handles your marketing, reviews, social media, and more. Get started in 5 minutes.',
   applicationName: 'LocalGenius',
+  metadataBase: new URL('https://localgenius.company'),
+  openGraph: {
+    title: 'LocalGenius — Your business, handled.',
+    description:
+      'The AI employee that handles your marketing, reviews, social media, and more. Get started in 5 minutes.',
+    url: 'https://localgenius.company',
+    siteName: 'LocalGenius',
+    images: [{ url: '/og-image.svg', width: 1200, height: 630, alt: 'Your business, handled.' }],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'LocalGenius — Your business, handled.',
+    description:
+      'The AI employee that handles your marketing, reviews, social media, and more. Get started in 5 minutes.',
+    images: ['/og-image.svg'],
+  },
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',

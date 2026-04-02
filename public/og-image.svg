@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" fill="none">
+  <!-- Terracotta background -->
+  <rect width="1200" height="630" fill="#C4704B"/>
+
+  <!-- Logo mark -->
+  <rect x="80" y="220" width="48" height="48" rx="8" fill="white" opacity="0.9"/>
+  <text x="104" y="250" dominant-baseline="middle" text-anchor="middle" font-family="'Source Sans 3', system-ui, sans-serif" font-weight="600" font-size="28" fill="#C4704B">L</text>
+
+  <!-- Wordmark -->
+  <text x="145" y="252" font-family="'Source Sans 3', system-ui, sans-serif" font-weight="600" font-size="28" fill="white" opacity="0.9">LocalGenius</text>
+
+  <!-- Tagline -->
+  <text x="80" y="340" font-family="'Source Sans 3', system-ui, sans-serif" font-weight="700" font-size="64" fill="white">Your business,</text>
+  <text x="80" y="415" font-family="'Source Sans 3', system-ui, sans-serif" font-weight="700" font-size="64" fill="white">handled.</text>
+
+  <!-- Subtext -->
+  <text x="80" y="480" font-family="'Source Sans 3', system-ui, sans-serif" font-weight="400" font-size="22" fill="white" opacity="0.8">The employee you always needed but could never afford.</text>
+
+  <!-- URL -->
+  <text x="80" y="560" font-family="'Source Sans 3', system-ui, sans-serif" font-weight="400" font-size="18" fill="white" opacity="0.6">localgenius.company</text>
+</svg>

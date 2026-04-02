@@ -8,6 +8,7 @@ interface InputProps {
   onSubmit: (text: string) => void;
   onVoiceStart?: () => void;
   onVoiceEnd?: () => void;
+  isTranscribing?: boolean;
   placeholder?: string;
   disabled?: boolean;
 }
@@ -18,6 +19,7 @@ export default function Input({
   onSubmit,
   onVoiceStart,
   onVoiceEnd,
+  isTranscribing = false,
   placeholder = 'Talk to LocalGenius...',
   disabled = false,
 }: InputProps) {
@@ -147,13 +149,21 @@ export default function Input({
           onMouseUp={handleMicRelease}
           onTouchStart={handleMicPress}
           onTouchEnd={handleMicRelease}
+          disabled={isTranscribing}
           className={[
             'flex-shrink-0 flex items-center justify-center',
             'w-[44px] h-[44px]',
             'rounded-full transition-colors duration-instant relative',
             isRecording ? 'bg-terracotta-light text-terracotta' : 'text-slate hover:text-charcoal',
+            isTranscribing && 'opacity-40 cursor-not-allowed',
           ].join(' ')}
-          aria-label={isRecording ? 'Recording... release to send' : 'Hold to record voice message'}
+          aria-label={
+            isTranscribing
+              ? 'Transcribing...'
+              : isRecording
+                ? 'Recording... release to send'
+                : 'Hold to record voice message'
+          }
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
@@ -162,6 +172,9 @@ export default function Input({
           </svg>
           {isRecording && (
             <span className="absolute w-2 h-2 bg-terracotta rounded-full animate-pulse-glow" />
+          )}
+          {isTranscribing && (
+            <span className="absolute w-2 h-2 bg-slate rounded-full animate-pulse" />
           )}
         </button>
 

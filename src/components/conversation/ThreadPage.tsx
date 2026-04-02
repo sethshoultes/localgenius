@@ -6,6 +6,7 @@ import QuickActions from '@/components/conversation/QuickActions';
 import Input from '@/components/shared/Input';
 import ErrorBanner from '@/components/shared/ErrorBanner';
 import { MessageSkeleton } from '@/components/shared/Skeleton';
+import { useVoiceInput } from '@/hooks/useVoiceInput';
 import {
   getConversation,
   streamMessage,
@@ -63,6 +64,21 @@ export default function ThreadPage() {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [streamingContent, setStreamingContent] = useState('');
   const cancelStreamRef = useRef<(() => void) | null>(null);
+
+  // Voice input hook
+  const { isRecording, isTranscribing, startRecording, stopRecording, error: voiceError } = useVoiceInput({
+    onTranscription: (text) => {
+      // Inject transcribed text into input field
+      setInputValue((prev) => (prev ? `${prev} ${text}` : text));
+    },
+  });
+
+  // Show voice error if any
+  useEffect(() => {
+    if (voiceError) {
+      setError(voiceError);
+    }
+  }, [voiceError]);
 
   useEffect(() => {
     let mounted = true;
@@ -245,6 +261,9 @@ export default function ThreadPage() {
         value={inputValue}
         onChange={setInputValue}
         onSubmit={handleSend}
+        onVoiceStart={startRecording}
+        onVoiceEnd={stopRecording}
+        isTranscribing={isTranscribing}
         placeholder="Talk to LocalGenius..."
         disabled={isLoading}
       />

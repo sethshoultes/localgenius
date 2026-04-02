@@ -31,7 +31,7 @@ function apiMessageToThread(msg: Message): ThreadMessage {
             : 'system_message',
     content: msg.content,
     timestamp: formatTimestamp(msg.createdAt),
-    metadata: msg.metadata,
+    metadata: msg.metadata as ThreadMessage['metadata'],
   };
 }
 

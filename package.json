@@ -18,7 +18,8 @@
     "db:studio": "drizzle-kit studio",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "load-test": "tsx scripts/load-test.ts"
+    "load-test": "tsx scripts/load-test.ts",
+    "smoke-test": "tsx scripts/smoke-test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

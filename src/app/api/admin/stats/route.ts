@@ -23,11 +23,12 @@ import { getAllUsageSummary } from "@/services/usage-metering";
  * Protected: requires admin role (checked against users.role).
  */
 export async function GET(request: NextRequest) {
-  const auth = await verifyAuth(request);
-  if (auth instanceof NextResponse) return auth;
+  try {
+    const auth = await verifyAuth(request);
+    if (auth instanceof NextResponse) return auth;
 
-  // Admin role check
-  const [user] = await db
+    // Admin role check
+    const [user] = await db
     .select({ role: users.role })
     .from(users)
     .where(eq(users.id, auth.userId))
@@ -141,4 +142,11 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString(),
     },
   });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to fetch admin stats";
+    return NextResponse.json(
+      { error: { code: "INTERNAL_ERROR", message } },
+      { status: 500 }
+    );
+  }
 }

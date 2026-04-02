@@ -28,53 +28,61 @@ const updateSchema = z.object({
  * Returns the full business profile for the authenticated user.
  */
 export async function GET(request: NextRequest) {
-  const auth = await verifyAuth(request);
-  if (auth instanceof NextResponse) return auth;
+  try {
+    const auth = await verifyAuth(request);
+    if (auth instanceof NextResponse) return auth;
 
-  const [biz] = await db
-    .select()
-    .from(businesses)
-    .where(
-      and(
-        eq(businesses.id, auth.businessId),
-        eq(businesses.organizationId, auth.organizationId)
+    const [biz] = await db
+      .select()
+      .from(businesses)
+      .where(
+        and(
+          eq(businesses.id, auth.businessId),
+          eq(businesses.organizationId, auth.organizationId)
+        )
       )
-    )
-    .limit(1);
+      .limit(1);
 
-  if (!biz) {
+    if (!biz) {
+      return NextResponse.json(
+        { error: { code: "NOT_FOUND", message: "Business not found" } },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      data: {
+        business: {
+          id: biz.id,
+          name: biz.name,
+          vertical: biz.vertical,
+          description: biz.description,
+          phone: biz.phone,
+          email: biz.email,
+          address: biz.address,
+          city: biz.city,
+          state: biz.state,
+          hours: biz.hours,
+          websiteUrl: biz.websiteUrl,
+          socialLinks: biz.socialLinks,
+          photos: biz.photos,
+          employeeCount: biz.employeeCount,
+          timezone: biz.timezone,
+          priorityFocus: biz.priorityFocus,
+          autonomyLevel: biz.autonomyLevel,
+          onboardingCompleted: !!biz.onboardingCompletedAt,
+          createdAt: biz.createdAt,
+        },
+      },
+      meta: { timestamp: new Date().toISOString() },
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to fetch business";
     return NextResponse.json(
-      { error: { code: "NOT_FOUND", message: "Business not found" } },
-      { status: 404 }
+      { error: { code: "INTERNAL_ERROR", message } },
+      { status: 500 }
     );
   }
-
-  return NextResponse.json({
-    data: {
-      business: {
-        id: biz.id,
-        name: biz.name,
-        vertical: biz.vertical,
-        description: biz.description,
-        phone: biz.phone,
-        email: biz.email,
-        address: biz.address,
-        city: biz.city,
-        state: biz.state,
-        hours: biz.hours,
-        websiteUrl: biz.websiteUrl,
-        socialLinks: biz.socialLinks,
-        photos: biz.photos,
-        employeeCount: biz.employeeCount,
-        timezone: biz.timezone,
-        priorityFocus: biz.priorityFocus,
-        autonomyLevel: biz.autonomyLevel,
-        onboardingCompleted: !!biz.onboardingCompletedAt,
-        createdAt: biz.createdAt,
-      },
-    },
-    meta: { timestamp: new Date().toISOString() },
-  });
 }
 
 /**

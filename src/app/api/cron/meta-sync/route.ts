@@ -15,53 +15,61 @@ import { fullSync } from "@/services/meta-social";
  * across the cron window — well within hourly limits.
  */
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("authorization");
-  const cronSecret = process.env.CRON_SECRET;
+  try {
+    const authHeader = request.headers.get("authorization");
+    const cronSecret = process.env.CRON_SECRET;
 
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json(
-      { error: { code: "UNAUTHORIZED", message: "Invalid cron secret" } },
-      { status: 401 }
+    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+      return NextResponse.json(
+        { error: { code: "UNAUTHORIZED", message: "Invalid cron secret" } },
+        { status: 401 }
+      );
+    }
+
+    // Get all active Meta connections
+    const connections = await db
+      .select()
+      .from(businessSettings)
+      .where(eq(businessSettings.platform, "meta"));
+
+    const activeConnections = connections.filter(
+      (c) => c.connectionStatus === "active"
     );
-  }
 
-  // Get all active Meta connections
-  const connections = await db
-    .select()
-    .from(businessSettings)
-    .where(eq(businessSettings.platform, "meta"));
+    let synced = 0;
+    let failed = 0;
+    const errors: string[] = [];
 
-  const activeConnections = connections.filter(
-    (c) => c.connectionStatus === "active"
-  );
+    for (const conn of activeConnections) {
+      // Stagger requests: 500ms delay between businesses to respect rate limits
+      if (synced > 0) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
 
-  let synced = 0;
-  let failed = 0;
-  const errors: string[] = [];
+      const result = await fullSync(conn.businessId, conn.organizationId);
 
-  for (const conn of activeConnections) {
-    // Stagger requests: 500ms delay between businesses to respect rate limits
-    if (synced > 0) {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      if (result.success) {
+        synced++;
+      } else {
+        failed++;
+        errors.push(`business ${conn.businessId}`);
+      }
     }
 
-    const result = await fullSync(conn.businessId, conn.organizationId);
-
-    if (result.success) {
-      synced++;
-    } else {
-      failed++;
-      errors.push(`business ${conn.businessId}`);
-    }
+    return NextResponse.json({
+      data: {
+        total: activeConnections.length,
+        synced,
+        failed,
+        errors: errors.slice(0, 10), // limit error list
+        timestamp: new Date().toISOString(),
+      },
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Meta sync failed";
+    return NextResponse.json({
+      data: { success: false, error: message },
+      meta: { timestamp: new Date().toISOString() },
+    }, { status: 500 });
   }
-
-  return NextResponse.json({
-    data: {
-      total: activeConnections.length,
-      synced,
-      failed,
-      errors: errors.slice(0, 10), // limit error list
-      timestamp: new Date().toISOString(),
-    },
-  });
 }

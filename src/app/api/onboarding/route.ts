@@ -88,17 +88,25 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const auth = await verifyAuth(request);
-  if (auth instanceof NextResponse) return auth;
+  try {
+    const auth = await verifyAuth(request);
+    if (auth instanceof NextResponse) return auth;
 
-  const [biz] = await db.select().from(businesses).where(and(eq(businesses.id, auth.businessId), eq(businesses.organizationId, auth.organizationId))).limit(1);
-  const [convo] = await db.select().from(conversations).where(eq(conversations.businessId, auth.businessId)).limit(1);
+    const [biz] = await db.select().from(businesses).where(and(eq(businesses.id, auth.businessId), eq(businesses.organizationId, auth.organizationId))).limit(1);
+    const [convo] = await db.select().from(conversations).where(eq(conversations.businessId, auth.businessId)).limit(1);
 
-  return NextResponse.json({
-    data: {
-      business: biz ? { id: biz.id, name: biz.name, vertical: biz.vertical, city: biz.city, onboardingCompleted: !!biz.onboardingCompletedAt, priorityFocus: biz.priorityFocus } : null,
-      conversationId: convo?.id || null,
-    },
-    meta: { timestamp: new Date().toISOString() },
-  });
+    return NextResponse.json({
+      data: {
+        business: biz ? { id: biz.id, name: biz.name, vertical: biz.vertical, city: biz.city, onboardingCompleted: !!biz.onboardingCompletedAt, priorityFocus: biz.priorityFocus } : null,
+        conversationId: convo?.id || null,
+      },
+      meta: { timestamp: new Date().toISOString() },
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to fetch onboarding status";
+    return NextResponse.json(
+      { error: { code: "INTERNAL_ERROR", message } },
+      { status: 500 }
+    );
+  }
 }

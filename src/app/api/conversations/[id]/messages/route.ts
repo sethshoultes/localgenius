@@ -141,8 +141,11 @@ export async function POST(
       return NextResponse.json({ error: { code: "VALIDATION_ERROR", message: "Invalid message", details: error.errors } }, { status: 400 });
     }
     console.error("[messages] Error:", error);
+    const cause = (error as { cause?: Error })?.cause;
+    if (cause) console.error("[messages] Cause:", cause);
     const message = error instanceof Error ? error.message : "Failed to send message";
-    return NextResponse.json({ error: { code: "INTERNAL_ERROR", message } }, { status: 500 });
+    const debug = cause ? `${message} (cause: ${cause.message})` : message;
+    return NextResponse.json({ error: { code: "INTERNAL_ERROR", message: debug } }, { status: 500 });
   }
 }
 

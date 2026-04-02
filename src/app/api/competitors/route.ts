@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { verifyAuth } from "@/api/middleware/auth";
 import {
   addCompetitor,
   removeCompetitor,
   getCompetitors,
 } from "@/services/competitor-monitor";
+
+const addCompetitorSchema = z.object({
+  name: z.string().min(1, "Competitor name is required"),
+  googlePlaceId: z.string().optional(),
+});
 
 /**
  * GET /api/competitors — List tracked competitors for the authenticated business.
@@ -47,30 +53,18 @@ export async function GET(request: NextRequest) {
  * If no googlePlaceId, searches by name + business city.
  */
 export async function POST(request: NextRequest) {
-  const auth = await verifyAuth(request);
-  if (auth instanceof NextResponse) return auth;
-
-  const body = await request.json();
-  const { name, googlePlaceId } = body;
-
-  if (!name || typeof name !== "string" || name.trim().length === 0) {
-    return NextResponse.json(
-      {
-        error: {
-          code: "VALIDATION_ERROR",
-          message: "Competitor name is required",
-        },
-      },
-      { status: 400 }
-    );
-  }
-
   try {
+    const auth = await verifyAuth(request);
+    if (auth instanceof NextResponse) return auth;
+
+    const body = await request.json();
+    const validated = addCompetitorSchema.parse(body);
+
     const competitor = await addCompetitor(
       auth.businessId,
       auth.organizationId,
-      name.trim(),
-      googlePlaceId
+      validated.name.trim(),
+      validated.googlePlaceId
     );
 
     return NextResponse.json(
@@ -81,6 +75,12 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: { code: "VALIDATION_ERROR", message: "Invalid competitor data", details: error.errors } },
+        { status: 400 }
+      );
+    }
     // Handle unique constraint violation (duplicate place_id for business)
     if (
       error instanceof Error &&
@@ -96,7 +96,11 @@ export async function POST(request: NextRequest) {
         { status: 409 }
       );
     }
-    throw error;
+    const message = error instanceof Error ? error.message : "Failed to add competitor";
+    return NextResponse.json(
+      { error: { code: "INTERNAL_ERROR", message } },
+      { status: 500 }
+    );
   }
 }
 
@@ -105,39 +109,47 @@ export async function POST(request: NextRequest) {
  * Query param: id (competitor UUID)
  */
 export async function DELETE(request: NextRequest) {
-  const auth = await verifyAuth(request);
-  if (auth instanceof NextResponse) return auth;
+  try {
+    const auth = await verifyAuth(request);
+    if (auth instanceof NextResponse) return auth;
 
-  const competitorId = request.nextUrl.searchParams.get("id");
+    const competitorId = request.nextUrl.searchParams.get("id");
 
-  if (!competitorId) {
-    return NextResponse.json(
-      {
-        error: {
-          code: "VALIDATION_ERROR",
-          message: "Competitor id is required as a query parameter",
+    if (!competitorId) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Competitor id is required as a query parameter",
+          },
         },
-      },
-      { status: 400 }
+        { status: 400 }
+      );
+    }
+
+    const removed = await removeCompetitor(competitorId, auth.businessId);
+
+    if (!removed) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "NOT_FOUND",
+            message: "Competitor not found or not owned by this business",
+          },
+        },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      data: { deleted: true },
+      meta: { timestamp: new Date().toISOString() },
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to delete competitor";
+    return NextResponse.json(
+      { error: { code: "INTERNAL_ERROR", message } },
+      { status: 500 }
     );
   }
-
-  const removed = await removeCompetitor(competitorId, auth.businessId);
-
-  if (!removed) {
-    return NextResponse.json(
-      {
-        error: {
-          code: "NOT_FOUND",
-          message: "Competitor not found or not owned by this business",
-        },
-      },
-      { status: 404 }
-    );
-  }
-
-  return NextResponse.json({
-    data: { deleted: true },
-    meta: { timestamp: new Date().toISOString() },
-  });
 }

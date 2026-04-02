@@ -53,7 +53,7 @@ const WELCOME_MESSAGE: ThreadMessage = {
   id: 'welcome',
   type: 'system_message',
   content:
-    "Good morning! I'm LocalGenius — your marketing employee. I handle your website, reviews, social posts, and more. Just tell me what you need, and I'll take care of it. What can I help with today?",
+    "Good morning. I've been getting things set up for you — your website is live, your Google listing is updated, and I'm keeping an eye on your reviews. Whenever you need something, just tell me here. I'll handle the rest.",
   timestamp: 'Just now',
 };
 

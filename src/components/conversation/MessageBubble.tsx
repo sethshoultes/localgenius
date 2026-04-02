@@ -25,11 +25,11 @@ export default function MessageBubble({
         {/* Bubble */}
         <div
           className={[
-            'px-4 py-3 text-body text-charcoal',
+            'px-4 text-body text-charcoal',
             'transition-opacity duration-fast',
             isUser
-              ? 'bg-terracotta-light rounded-md rounded-br-sm'
-              : 'bg-cream rounded-md rounded-bl-sm',
+              ? 'py-3 bg-terracotta-light rounded-md rounded-br-sm'
+              : 'py-3.5 bg-cream rounded-md rounded-bl-sm leading-relaxed',
             status === 'sending' ? 'opacity-70' : 'opacity-100',
           ].join(' ')}
         >

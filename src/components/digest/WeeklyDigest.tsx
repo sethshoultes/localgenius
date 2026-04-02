@@ -120,7 +120,7 @@ export default function WeeklyDigest({
             <div
               key={i}
               className={[
-                'flex flex-col gap-1 p-4 rounded-md',
+                'flex flex-col gap-1.5 p-5 rounded-md',
                 metric.isBest
                   ? 'bg-gold-light border-l-[3px] border-gold'
                   : 'bg-cream',
@@ -186,8 +186,8 @@ export default function WeeklyDigest({
             <div
               key={i}
               className={[
-                'flex items-start gap-3 text-body text-charcoal',
-                action.highlight ? 'p-3 bg-cream rounded-md' : '',
+                'flex items-start gap-3 text-body text-charcoal leading-relaxed',
+                action.highlight ? 'p-4 bg-cream rounded-md' : '',
               ].join(' ')}
             >
               <span className="text-sage-text mt-0.5 flex-shrink-0">

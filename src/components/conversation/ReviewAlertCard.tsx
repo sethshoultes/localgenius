@@ -92,7 +92,7 @@ export default function ReviewAlertCard({
       <Stars rating={rating} />
 
       {/* Review text */}
-      <p className="text-body text-charcoal italic">&ldquo;{reviewText}&rdquo;</p>
+      <p className="text-body text-charcoal italic leading-relaxed">&ldquo;{reviewText}&rdquo;</p>
 
       {/* Draft response (expandable) */}
       {showDraft && (

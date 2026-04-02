@@ -58,10 +58,10 @@ export default function InsightCard({
       </div>
 
       {/* The insight */}
-      <p className="text-body text-charcoal">{insight}</p>
+      <p className="text-body text-charcoal leading-relaxed">{insight}</p>
 
       {/* The suggestion */}
-      <p className="text-body text-charcoal-soft">{suggestion}</p>
+      <p className="text-body text-charcoal-soft leading-relaxed">{suggestion}</p>
 
       {/* Actions */}
       <div className="flex gap-3">

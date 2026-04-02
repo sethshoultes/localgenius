@@ -20,7 +20,7 @@ export const DEMO_CONVERSATION: ThreadMessage[] = [
     id: 'demo-1',
     type: 'system_message',
     content:
-      "Welcome, Maria. I'm LocalGenius — your marketing employee. Your website is live at mariaskitchenatx.com, your Google listing is updated, and I posted your first photo to Instagram. I'll handle things from here. Just tell me what you need.",
+      "Good morning, Maria. I've been getting things set up — your website is live at mariaskitchenatx.com, your Google listing is updated, and your first photo is on Instagram. Whenever you need something, just tell me here.",
     timestamp: 'Monday 10:15am',
   },
 

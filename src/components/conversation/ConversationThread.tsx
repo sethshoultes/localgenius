@@ -206,7 +206,7 @@ export default function ConversationThread({
       aria-live="polite"
       aria-label="Conversation thread"
     >
-      <div className="thread-container flex flex-col gap-content-gap py-6">
+      <div className="thread-container flex flex-col gap-content-gap py-6 animate-in">
         {messages.map(renderMessage)}
 
         {/* Typing indicator */}

@@ -16,6 +16,7 @@ import {
   actions,
   analyticsEvents,
   reviews,
+  campaignSuggestions,
 } from "@/db/schema";
 import { eq, and, gte, desc, sql } from "drizzle-orm";
 import { generate, generateSocialPost } from "./ai";
@@ -74,10 +75,38 @@ export async function generateSuggestedCampaigns(
     if (timelyPost) campaigns.push(timelyPost);
   }
 
-  return campaigns.sort((a, b) => {
+  const sorted = campaigns.sort((a, b) => {
     const order = { high: 0, medium: 1, low: 2 };
     return order[a.priority] - order[b.priority];
   });
+
+  // Persist suggestions to database (Jensen #7 — data flywheel)
+  for (const campaign of sorted) {
+    try {
+      const [row] = await db
+        .insert(campaignSuggestions)
+        .values({
+          businessId,
+          organizationId,
+          type: campaign.type,
+          title: campaign.title,
+          description: campaign.description,
+          content: campaign.content,
+          basedOn: campaign.basedOn,
+          estimatedImpact: campaign.estimatedImpact,
+          priority: campaign.priority,
+          status: "pending",
+        })
+        .returning({ id: campaignSuggestions.id });
+
+      // Update the campaign ID to use the database-generated UUID
+      if (row) campaign.id = row.id;
+    } catch {
+      // Non-critical — campaign still works in memory even if persist fails
+    }
+  }
+
+  return sorted;
 }
 
 /**
@@ -279,7 +308,69 @@ export async function approveCampaign(
     })
     .returning();
 
+  // Mark suggestion as approved in database (Jensen #7)
+  try {
+    await db
+      .update(campaignSuggestions)
+      .set({ status: "approved", approvedAt: new Date(), actionId: action.id })
+      .where(eq(campaignSuggestions.id, campaign.id));
+  } catch {
+    // Non-critical — action was already created
+  }
+
   return { success: true, actionId: action.id };
+}
+
+/**
+ * Dismiss a suggested campaign. Records the dismissal so the AI
+ * learns not to suggest similar campaigns in the future.
+ */
+export async function dismissCampaign(
+  campaignId: string,
+  businessId: string
+): Promise<boolean> {
+  const result = await db
+    .update(campaignSuggestions)
+    .set({ status: "dismissed", dismissedAt: new Date() })
+    .where(
+      and(
+        eq(campaignSuggestions.id, campaignId),
+        eq(campaignSuggestions.businessId, businessId)
+      )
+    )
+    .returning({ id: campaignSuggestions.id });
+
+  return result.length > 0;
+}
+
+/**
+ * Get pending campaign suggestions for a business.
+ */
+export async function getPendingSuggestions(
+  businessId: string
+): Promise<SuggestedCampaign[]> {
+  const rows = await db
+    .select()
+    .from(campaignSuggestions)
+    .where(
+      and(
+        eq(campaignSuggestions.businessId, businessId),
+        eq(campaignSuggestions.status, "pending")
+      )
+    )
+    .orderBy(desc(campaignSuggestions.createdAt));
+
+  return rows.map((r) => ({
+    id: r.id,
+    type: r.type as SuggestedCampaign["type"],
+    title: r.title,
+    description: r.description,
+    content: r.content as SuggestedCampaign["content"],
+    basedOn: r.basedOn || "",
+    estimatedImpact: r.estimatedImpact || "",
+    priority: r.priority as SuggestedCampaign["priority"],
+    createdAt: r.createdAt.toISOString(),
+  }));
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

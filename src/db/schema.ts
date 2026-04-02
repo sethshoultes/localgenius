@@ -606,6 +606,41 @@ export const scheduledPosts = pgTable(
 // Tracked competitors for each business. Stores current + previous snapshot
 // for delta calculation in Weekly Digest competitor comparisons.
 
+// ─── Campaign Suggestions ────────────────────────────────────────────────────
+// Persists AI-generated campaign suggestions so the data flywheel can learn
+// which suggestions get approved vs dismissed. Jensen Issue #7.
+
+export const campaignSuggestions = pgTable(
+  "campaign_suggestions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    businessId: uuid("business_id")
+      .notNull()
+      .references(() => businesses.id),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id),
+    type: text("type").notNull(), // social_post, email_campaign, review_request, special_offer
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    content: jsonb("content").notNull(), // { text, platform, scheduledFor, topic }
+    basedOn: text("based_on"), // insight ID that triggered this
+    estimatedImpact: text("estimated_impact"),
+    priority: text("priority").notNull().default("medium"), // high, medium, low
+    status: text("status").notNull().default("pending"), // pending, approved, dismissed, expired
+    approvedAt: timestamp("approved_at", { withTimezone: true }),
+    dismissedAt: timestamp("dismissed_at", { withTimezone: true }),
+    actionId: uuid("action_id").references(() => actions.id), // links to action when approved
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("idx_campaign_suggestions_business").on(table.businessId, table.status),
+    index("idx_campaign_suggestions_created").on(table.createdAt),
+  ]
+);
+
 // ─── Insight Actions ─────────────────────────────────────────────────────────
 // Persists insight tracking (acted/dismissed). Replaces in-memory Map.
 // Jensen Issue #6: state was lost on every restart.

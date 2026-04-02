@@ -28,45 +28,52 @@
 - [x] Response is contextual (mentions the business, uses warm voice)
 - [x] System prompt follows brand rules (no "AI-powered", first person)
 - [x] Approval cards render with Approve + Edit buttons
-- [ ] Approve → "Publishing..." → Published card with checkmark
-- [ ] Typing indicator (terracotta dots) appears during AI thinking
+- [x] Approve → "Publishing..." → Published card with checkmark
+- [x] Typing indicator (terracotta dots) appears during AI thinking
 
 ### Reviews
-- [ ] Review alerts appear in thread with star rating and draft response
-- [ ] "See AI Response" expands the draft
-- [ ] Approve sends the response
-- [ ] Negative reviews (1-2 stars) show urgent red border
+- [x] Review alerts appear in thread with star rating and draft response
+- [x] "See AI Response" expands the draft
+- [x] Approve sends the response
+- [x] Negative reviews (1-2 stars) show urgent red border
 
 ### Weekly Digest
-- [ ] Renders 3 acts: What Happened, What I Did, What I Recommend
-- [ ] Sparkline chart renders (SVG, no external dependency)
-- [ ] Metrics show with display-size numbers and change indicators
-- [ ] Recommendation has actionable buttons
+- [x] Renders 3 acts: What Happened, What I Did, What I Recommend
+- [x] Sparkline chart renders (SVG, no external dependency)
+- [x] Metrics show with display-size numbers and change indicators
+- [x] Recommendation has actionable buttons
 
 ### Mobile
-- [ ] Touch targets >= 44px on all interactive elements
-- [ ] Input bar stays above keyboard on iOS and Android
-- [ ] Safe area insets applied (notch, home indicator)
-- [ ] Bottom nav has exactly 2 tabs: Thread and Digest
+- [x] Touch targets >= 44px on all interactive elements
+- [x] Input bar stays above keyboard on iOS and Android
+- [x] Safe area insets applied (notch, home indicator)
+- [x] Bottom nav has exactly 2 tabs: Thread and Digest
 - [ ] Swipe gestures work (dismiss notifications, back navigation)
 
+### Auth
+- [x] Login with email + password
+- [x] Registration with business info
+- [x] Forgot password → email reset link
+- [x] Reset password → new password → sign in
+- [x] Voice input (mic button, push-to-talk)
+
 ### Infrastructure
-- [ ] Vercel deployment succeeds from git push
-- [ ] Environment variables set: ANTHROPIC_API_KEY, JWT_SECRET, DATABASE_URL
-- [ ] Database migrations applied (Neon PostgreSQL)
+- [x] Vercel deployment succeeds from git push
+- [x] Environment variables set: ANTHROPIC_API_KEY, JWT_SECRET, DATABASE_URL
+- [x] Database migrations applied (Neon PostgreSQL)
 - [ ] Stripe webhook configured for billing events
-- [ ] CORS configured for production domain
+- [x] CORS configured for production domain
 
 ---
 
 ## Launch Day
 
 ### Morning (Before First Invite)
-- [ ] Seed Maria's Kitchen demo account for internal testing
-- [ ] Run full onboarding flow with a real business name
-- [ ] Send a test message and verify AI response quality
-- [ ] Verify demo mode works (`NEXT_PUBLIC_DEMO_MODE=true`)
-- [ ] Check Vercel deployment is green, no function errors
+- [x] Seed Maria's Kitchen demo account for internal testing
+- [x] Run full onboarding flow with a real business name
+- [x] Send a test message and verify AI response quality
+- [x] Demo mode removed (app now uses real backend)
+- [x] Check Vercel deployment is green, no function errors
 
 ### First 10 Restaurants (10am-12pm)
 - [ ] GTM Lead visits first 5 restaurants with iPad demo

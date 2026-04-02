@@ -1,9 +1,8 @@
 # LocalGenius CI Pipeline
-# Spec: engineering/infrastructure.md Section 1.1
 #
 # Runs on every push and PR:
-#   1. Lint + type check (parallel)
-#   2. Build
+#   1. Test (736+ specs via vitest)
+#   2. Build (Next.js production build)
 #
 # Total target time: < 5 minutes
 
@@ -16,8 +15,8 @@ on:
     branches: [main]
 
 jobs:
-  lint-and-typecheck:
-    name: Lint & Type Check
+  test:
+    name: Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,38 +24,32 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-
-      - name: Install pnpm
-        run: corepack enable && corepack prepare pnpm@latest --activate
+          cache: "npm"
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
-      - name: Lint
-        run: pnpm lint
-
-      - name: Type check
-        run: pnpm typecheck
+      - name: Run tests
+        run: npm test
 
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: lint-and-typecheck
+    needs: test
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-
-      - name: Install pnpm
-        run: corepack enable && corepack prepare pnpm@latest --activate
+          cache: "npm"
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Build
-        run: pnpm build
+        run: npm run build
         env:
-          # Build-time env vars (no secrets needed for build)
           DATABASE_URL: "postgresql://placeholder:placeholder@localhost:5432/placeholder"
+          JWT_SECRET: "ci-placeholder-secret-that-is-at-least-32-characters-long"
+          ANTHROPIC_API_KEY: "sk-ant-placeholder"

@@ -64,7 +64,7 @@ describe("sendWelcomeEmail", () => {
     const result = await sendWelcomeEmail("owner@testbiz.com", "Test Biz");
 
     expect(result.success).toBe(true);
-    expect(result.messageId).toBe("msg_welcome_001");
+    expect((result as any).messageId).toBe("msg_welcome_001");
     expect(mockEmailsSend).toHaveBeenCalledWith(
       expect.objectContaining({
         from: "LocalGenius <hello@localgenius.com>",
@@ -84,7 +84,7 @@ describe("sendWelcomeEmail", () => {
     const result = await sendWelcomeEmail("bad-email", "Test Biz");
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Invalid email address");
+    expect((result as any).error).toBe("Invalid email address");
   });
 
   it("returns error when Resend throws an exception", async () => {
@@ -93,7 +93,7 @@ describe("sendWelcomeEmail", () => {
     const result = await sendWelcomeEmail("owner@testbiz.com", "Test Biz");
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Network timeout");
+    expect((result as any).error).toBe("Network timeout");
   });
 
   it("includes business name in subject line", async () => {
@@ -138,7 +138,7 @@ describe("sendWeeklyDigestEmail", () => {
     );
 
     expect(result.success).toBe(true);
-    expect(result.messageId).toBe("msg_digest_001");
+    expect((result as any).messageId).toBe("msg_digest_001");
     expect(mockEmailsSend).toHaveBeenCalledWith(
       expect.objectContaining({
         to: "owner@testbiz.com",
@@ -176,7 +176,7 @@ describe("sendWeeklyDigestEmail", () => {
     });
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe("RESEND_API_KEY is not set");
+    expect((result as any).error).toBe("RESEND_API_KEY is not set");
   });
 });
 
@@ -213,7 +213,7 @@ describe("sendNegativeReviewAlert", () => {
     );
 
     expect(result.success).toBe(true);
-    expect(result.messageId).toBe("msg_review_alert_001");
+    expect((result as any).messageId).toBe("msg_review_alert_001");
   });
 
   it("includes rating and platform in subject", async () => {
@@ -267,7 +267,7 @@ describe("sendNegativeReviewAlert", () => {
     );
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Rate limit exceeded");
+    expect((result as any).error).toBe("Rate limit exceeded");
   });
 });
 
@@ -348,7 +348,7 @@ describe("sendSubscriptionConfirmation", () => {
     );
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Service unavailable");
+    expect((result as any).error).toBe("Service unavailable");
   });
 });
 
@@ -377,7 +377,7 @@ describe("sendPaymentFailedNotice", () => {
     );
 
     expect(result.success).toBe(true);
-    expect(result.messageId).toBe("msg_payment_failed_001");
+    expect((result as any).messageId).toBe("msg_payment_failed_001");
     expect(mockEmailsSend).toHaveBeenCalledWith(
       expect.objectContaining({
         to: "owner@testbiz.com",
@@ -408,7 +408,7 @@ describe("sendPaymentFailedNotice", () => {
     );
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Bounce detected");
+    expect((result as any).error).toBe("Bounce detected");
   });
 
   it("handles exception during send", async () => {
@@ -420,7 +420,7 @@ describe("sendPaymentFailedNotice", () => {
     );
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Connection refused");
+    expect((result as any).error).toBe("Connection refused");
   });
 });
 
@@ -437,7 +437,7 @@ describe("Email service — missing RESEND_API_KEY", () => {
     const result = await sendWelcomeEmail("owner@testbiz.com", "Test Biz");
 
     expect(result.success).toBe(false);
-    expect(result.error).toContain("RESEND_API_KEY");
+    expect((result as any).error).toContain("RESEND_API_KEY");
   });
 });
 
@@ -463,7 +463,7 @@ describe("Email service — send helper", () => {
     const result = await sendWelcomeEmail("owner@testbiz.com", "Test Biz");
 
     expect(result.success).toBe(true);
-    expect(result.messageId).toBe("msg_12345");
+    expect((result as any).messageId).toBe("msg_12345");
   });
 
   it("returns empty string when data.id is undefined", async () => {

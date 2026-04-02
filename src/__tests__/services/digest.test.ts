@@ -337,7 +337,7 @@ describe("Digest Service — generateDigest()", () => {
 
     expect(result?.competitorContext).not.toBeNull();
     expect(result?.competitorContext?.competitors).toHaveLength(1);
-    expect(result?.competitorContext?.competitors[0].name).toBe("Rival Restaurant");
+    expect((result?.competitorContext?.competitors as any)[0].name).toBe("Rival Restaurant");
   });
 
   it("returns null competitor context when no competitors tracked", async () => {
@@ -508,7 +508,7 @@ describe("Digest Service — generateAllDigests()", () => {
 
   it("skips businesses that have not completed onboarding", async () => {
     const businesses = [BUSINESS_ONBOARDED, BUSINESS_NOT_ONBOARDED];
-    setupSelectForAllDigests(businesses);
+    setupSelectForAllDigests(businesses as typeof BUSINESS_ONBOARDED[]);
 
     // Only the onboarded business should be processed
     mockSelectLimitResult.mockResolvedValue([BUSINESS_ONBOARDED]);
@@ -523,7 +523,7 @@ describe("Digest Service — generateAllDigests()", () => {
 
   it("skips deleted businesses", async () => {
     const businesses = [BUSINESS_ONBOARDED, BUSINESS_DELETED];
-    setupSelectForAllDigests(businesses);
+    setupSelectForAllDigests(businesses as typeof BUSINESS_ONBOARDED[]);
 
     const result = await generateAllDigests();
 

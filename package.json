@@ -80,9 +80,16 @@
     "node": ">=20.0.0"
   },
   "eslintConfig": {
-    "extends": [],
+    "extends": [
+      "next/core-web-vitals"
+    ],
     "ignorePatterns": [
-      "src/__tests__/**"
+      "src/__tests__/**",
+      "e2e/**",
+      "scripts/**",
+      "src/stories/**",
+      "*.config.js",
+      "*.config.ts"
     ]
   }
 }

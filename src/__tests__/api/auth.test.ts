@@ -400,7 +400,7 @@ describe("POST /api/auth/refresh", () => {
   it("refreshes an expired token within grace period", async () => {
     // Simulate JWTExpired error from jose
     const { errors } = await import("jose");
-    mockJwtVerify.mockRejectedValue(new errors.JWTExpired("jwt expired"));
+    mockJwtVerify.mockRejectedValue(new errors.JWTExpired("jwt expired", {}, "exp", "expired"));
 
     // Token expired 5 minutes ago (within 30-min grace period)
     const fiveMinAgo = Math.floor((Date.now() - 5 * 60 * 1000) / 1000);
@@ -421,7 +421,7 @@ describe("POST /api/auth/refresh", () => {
 
   it("returns 401 SESSION_EXPIRED when token is expired beyond grace period", async () => {
     const { errors } = await import("jose");
-    mockJwtVerify.mockRejectedValue(new errors.JWTExpired("jwt expired"));
+    mockJwtVerify.mockRejectedValue(new errors.JWTExpired("jwt expired", {}, "exp", "expired"));
 
     // Token expired 60 minutes ago (beyond 30-min grace period)
     const sixtyMinAgo = Math.floor((Date.now() - 60 * 60 * 1000) / 1000);

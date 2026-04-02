@@ -154,7 +154,7 @@ function makeRequest(
 
   const init: RequestInit = { method, headers };
   if (body) init.body = JSON.stringify(body);
-  return new NextRequest(url, init);
+  return new NextRequest(url, init as any);
 }
 
 function resetCallCounters() {
@@ -548,7 +548,7 @@ describe("Integration: Review response flow", () => {
       { ...TEST_REVIEW, id: "review-uuid-002", reviewerName: "John Smith", rating: 3, reviewText: "Average experience", sentiment: "neutral" },
     ];
     const summary = { total: 2, avgRating: 3.5, positive: 1, neutral: 1, negative: 0 };
-    const responses = []; // no responses yet
+    const responses: unknown[] = []; // no responses yet
 
     selectResults = [
       reviewsList,  // allReviews query

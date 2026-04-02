@@ -1,14 +1,9 @@
 /**
  * Next.js Root Middleware — Unified Request Pipeline
  *
- * Runs on every API request. Consolidates:
- *   1. Public route bypass (no auth needed)
- *   2. Rate limiting (tier-based)
- *   3. Auth verification (JWT → user context)
- *   4. Tenant scoping (org_id for RLS)
- *   5. CORS headers
- *
- * Protected routes require auth. Public routes pass through.
+ * Handles both page routes and API routes:
+ *   Pages: cookie-based auth, redirect to /login if unauthenticated
+ *   API: Bearer token OR cookie auth, rate limiting, tenant scoping, CORS
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -19,14 +14,21 @@ const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "dev-secret-change-in-production"
 );
 
+const COOKIE_NAME = "lg_session";
+
 // ─── Route Classification ─────────────────────────────────────────────────────
 
-// Public routes — no auth required
-const PUBLIC_ROUTES = [
+// Public pages — no auth required
+const PUBLIC_PAGES = ["/", "/about", "/pricing", "/login", "/register", "/landing", "/welcome"];
+
+// Public API routes — no auth required
+const PUBLIC_API_ROUTES = [
   "/api/health",
   "/api/auth/register",
   "/api/auth/login",
   "/api/auth/refresh",
+  "/api/auth/logout",
+  "/api/auth/session",
 ];
 
 // Webhook routes — authenticated via signatures, not JWT
@@ -36,7 +38,7 @@ const WEBHOOK_ROUTES = [
   "/api/webhooks/google",
 ];
 
-// Cron routes — authenticated via CRON_SECRET, not JWT
+// Cron routes — authenticated via CRON_SECRET
 const CRON_ROUTES = [
   "/api/cron/digest",
   "/api/cron/google-sync",
@@ -44,23 +46,26 @@ const CRON_ROUTES = [
   "/api/cron/run",
 ];
 
-// OAuth callback routes — authenticated via state parameter
+// OAuth callbacks — authenticated via state parameter
 const OAUTH_CALLBACK_ROUTES = [
   "/api/integrations/google/callback",
   "/api/integrations/meta/callback",
 ];
 
-// Public website routes — served to customers, no auth
 const WEBSITE_ROUTES_PREFIX = "/api/website/";
 
-function isPublic(pathname: string): boolean {
+function isPublicAPI(pathname: string): boolean {
   return (
-    PUBLIC_ROUTES.includes(pathname) ||
+    PUBLIC_API_ROUTES.includes(pathname) ||
     WEBHOOK_ROUTES.includes(pathname) ||
     CRON_ROUTES.includes(pathname) ||
     OAUTH_CALLBACK_ROUTES.includes(pathname) ||
     pathname.startsWith(WEBSITE_ROUTES_PREFIX)
   );
+}
+
+function isPublicPage(pathname: string): boolean {
+  return PUBLIC_PAGES.includes(pathname) || pathname.startsWith("/_next/") || pathname.includes(".");
 }
 
 function skipRateLimit(pathname: string): boolean {
@@ -71,17 +76,72 @@ function skipRateLimit(pathname: string): boolean {
   );
 }
 
+// ─── JWT Extraction ───────────────────────────────────────────────────────────
+
+async function extractAuth(request: NextRequest): Promise<{
+  userId?: string;
+  orgId?: string;
+  bizId?: string;
+}> {
+  // Try Bearer token first (API clients, mobile app)
+  const authHeader = request.headers.get("authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    try {
+      const { payload } = await jose.jwtVerify(authHeader.slice(7), JWT_SECRET);
+      return {
+        userId: payload.sub as string,
+        orgId: payload.org as string,
+        bizId: payload.biz as string,
+      };
+    } catch {
+      // Fall through to cookie
+    }
+  }
+
+  // Try httpOnly session cookie (browser)
+  const cookie = request.cookies.get(COOKIE_NAME);
+  if (cookie?.value) {
+    try {
+      const { payload } = await jose.jwtVerify(cookie.value, JWT_SECRET);
+      return {
+        userId: payload.sub as string,
+        orgId: payload.org as string,
+        bizId: payload.biz as string,
+      };
+    } catch {
+      // Cookie expired or invalid
+    }
+  }
+
+  return {};
+}
+
 // ─── Middleware Pipeline ──────────────────────────────────────────────────────
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // Only process API routes
+  // ─── Page Routes ────────────────────────────────────────────────────────
   if (!pathname.startsWith("/api/")) {
+    // Public pages pass through
+    if (isPublicPage(pathname)) {
+      return NextResponse.next();
+    }
+
+    // Protected pages: check cookie, redirect to /login if no session
+    const { userId } = await extractAuth(request);
+    if (!userId) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
     return NextResponse.next();
   }
 
-  // ─── Step 1: CORS Preflight ──────────────────────────────────────────────
+  // ─── API Routes ─────────────────────────────────────────────────────────
+
+  // CORS Preflight
   if (request.method === "OPTIONS") {
     return new NextResponse(null, {
       status: 204,
@@ -94,55 +154,37 @@ export async function middleware(request: NextRequest) {
     });
   }
 
-  // ─── Step 2: Rate Limiting ───────────────────────────────────────────────
-  let userId: string | undefined;
-  let orgId: string | undefined;
-  let bizId: string | undefined;
+  // Extract auth from Bearer token or cookie
+  const { userId, orgId, bizId } = await extractAuth(request);
 
-  // Extract JWT claims for rate limit keying + auth
-  const authHeader = request.headers.get("authorization");
-  if (authHeader?.startsWith("Bearer ")) {
-    try {
-      const { payload } = await jose.jwtVerify(authHeader.slice(7), JWT_SECRET);
-      userId = payload.sub as string;
-      orgId = payload.org as string;
-      bizId = payload.biz as string;
-    } catch {
-      // Token invalid or expired — will be handled below
-    }
-  }
-
+  // Rate limiting
   if (!skipRateLimit(pathname)) {
     const limited = checkRateLimit(request, userId);
     if (limited) return limited;
   }
 
-  // ─── Step 3: Auth Enforcement ────────────────────────────────────────────
-  if (!isPublic(pathname) && !userId) {
+  // Auth enforcement for protected API routes
+  if (!isPublicAPI(pathname) && !userId) {
     return NextResponse.json(
       { error: { code: "UNAUTHORIZED", message: "Authentication required" } },
       { status: 401 }
     );
   }
 
-  // ─── Step 4: Build Response with Headers ─────────────────────────────────
+  // Build response with context headers
   const response = NextResponse.next();
 
-  // Inject auth context as headers for route handlers
-  // This avoids re-verifying JWT in every route handler
   if (userId) {
     response.headers.set("x-user-id", userId);
     if (orgId) response.headers.set("x-org-id", orgId);
     if (bizId) response.headers.set("x-biz-id", bizId);
   }
 
-  // CORS headers
   response.headers.set(
     "Access-Control-Allow-Origin",
     process.env.CORS_ALLOWED_ORIGIN || "*"
   );
 
-  // Rate limit headers
   if (!skipRateLimit(pathname)) {
     addRateLimitHeaders(response, request, userId);
   }
@@ -151,5 +193,8 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: "/api/:path*",
+  matcher: [
+    // Match all routes except static files and Next.js internals
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+  ],
 };

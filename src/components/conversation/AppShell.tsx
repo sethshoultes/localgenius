@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import UserMenu from '@/components/shared/UserMenu';
+import { useAuth } from '@/lib/auth-client';
 
 /**
  * AppShell — Header + content + bottom nav.
@@ -14,6 +16,7 @@ export default function AppShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const { business } = useAuth();
 
   return (
     <div className="h-screen flex flex-col bg-warm-white">
@@ -22,9 +25,10 @@ export default function AppShell({
         style={{ borderColor: 'var(--border-subtle)' }}
       >
         <div>
-          <h1 className="text-h2 text-charcoal">Maria&apos;s Kitchen</h1>
+          <h1 className="text-h2 text-charcoal">{business?.name || 'LocalGenius'}</h1>
           <p className="text-caption text-sage">Everything&apos;s handled</p>
         </div>
+        <UserMenu />
       </header>
 
       <main className="flex-1 overflow-hidden flex flex-col min-h-0">

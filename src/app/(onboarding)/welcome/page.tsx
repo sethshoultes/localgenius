@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/shared/Button';
 import { tapCelebrate, tapSelect } from '@/lib/haptics';
+import { useAuth } from '@/lib/auth-client';
 import {
   discoverBusiness,
   generateReveal,
@@ -78,6 +79,17 @@ const MOCK_REVEAL: RevealData = {
 };
 
 export default function OnboardingPage() {
+  const router = useRouter();
+  const { business, isAuthenticated, isLoading: authLoading } = useAuth();
+
+  // Guard: redirect already-onboarded users to the app
+  useEffect(() => {
+    if (!authLoading && isAuthenticated && business?.vertical) {
+      // business.vertical is set during onboarding — if it exists, they're done
+      router.replace('/app');
+    }
+  }, [authLoading, isAuthenticated, business, router]);
+
   const [step, setStep] = useState<Step>(1);
   const [state, setState] = useState<OnboardingState>({
     businessName: '',
@@ -98,7 +110,6 @@ export default function OnboardingPage() {
   const [websiteHtml, setWebsiteHtml] = useState<string | null>(null);
   const [websitePreviewUrl, setWebsitePreviewUrl] = useState<string | null>(null);
 
-  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const stepContainerRef = useRef<HTMLDivElement>(null);
 

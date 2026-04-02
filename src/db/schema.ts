@@ -134,6 +134,12 @@ export const businesses = pgTable(
     state: text("state").notNull(),
     address: text("address"),
     phone: text("phone"),
+    email: text("email"),
+    description: text("description"),
+    hours: jsonb("hours"), // { "Mon-Fri": "11am-9pm", "Sat-Sun": "10am-10pm" }
+    websiteUrl: text("website_url"),
+    socialLinks: jsonb("social_links"), // { instagram: "...", facebook: "..." }
+    photos: jsonb("photos"), // string[] of URLs
     employeeCount: integer("employee_count"),
     timezone: text("timezone").notNull().default("America/Chicago"),
     onboardingCompletedAt: timestamp("onboarding_completed_at", {

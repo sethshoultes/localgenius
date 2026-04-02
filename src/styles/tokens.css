@@ -1,0 +1,227 @@
+/*
+ * LocalGenius Design Tokens
+ * Source: engineering/design/design-tokens.md
+ *
+ * All values are canonical. Do not override in component styles.
+ * Components reference semantic tokens (--surface-*, --text-*, --action-*).
+ * Raw palette tokens (--color-*) are used only in this file's semantic mappings.
+ */
+
+:root {
+  /* ============================================================
+   * COLOR PALETTE — Raw values
+   * ============================================================ */
+
+  /* Core */
+  --color-charcoal: #2C2C2C;           /* hsl(0, 0%, 17%) — primary text */
+  --color-charcoal-soft: #3D3D3D;      /* hsl(0, 0%, 24%) — secondary headings */
+  --color-warm-white: #FAF8F5;         /* hsl(36, 33%, 97%) — app background */
+  --color-cream: #F2EDE8;              /* hsl(30, 24%, 93%) — card backgrounds */
+
+  /* Accent — Terracotta */
+  --color-terracotta: #C4704B;         /* hsl(18, 47%, 53%) — buttons, large text, decorative */
+  --color-terracotta-text: #A35535;    /* hsl(18, 50%, 42%) — AA compliant for body text on warm-white (4.8:1) */
+  --color-terracotta-hover: #B5613D;   /* hsl(18, 49%, 47%) */
+  --color-terracotta-active: #A35535;  /* hsl(18, 50%, 42%) */
+  --color-terracotta-light: #F5E0D5;   /* hsl(18, 53%, 89%) — selected backgrounds */
+
+  /* Accent — Sage */
+  --color-sage: #7A8B6F;              /* hsl(102, 11%, 49%) — backgrounds, icons, decorative */
+  --color-sage-text: #5C6B52;         /* hsl(102, 13%, 37%) — AA compliant for body text on warm-white (5.5:1) */
+  --color-sage-hover: #6B7C60;        /* hsl(102, 13%, 43%) */
+  --color-sage-light: #E8EDE5;        /* hsl(102, 14%, 91%) — success backgrounds */
+
+  /* Supporting */
+  --color-gold: #D4A853;              /* hsl(40, 59%, 58%) — decorative, icons, large text */
+  --color-gold-text: #8B6914;         /* hsl(40, 75%, 31%) — AA compliant for body text on warm-white (6.3:1) */
+  --color-gold-light: #F5EDD8;        /* hsl(40, 56%, 90%) */
+  --color-slate: #6B7280;             /* hsl(220, 9%, 46%) — secondary text (4.56:1 — passes AA) */
+  --color-slate-light: #8390A0;       /* hsl(218, 11%, 57%) — placeholders (3.2:1 — passes AA large text) */
+  --color-blush: #F5E6E0;             /* hsl(17, 47%, 92%) — notification badges */
+
+  /* System */
+  --color-error: #C0392B;             /* hsl(6, 63%, 46%) */
+  --color-error-light: #FADBD8;       /* hsl(6, 73%, 92%) */
+  --color-error-dark: #962D22;        /* hsl(6, 63%, 36%) */
+  --color-warning: #D4A853;           /* reuses gold */
+  --color-overlay: rgba(44, 44, 44, 0.5);
+
+  /* ============================================================
+   * SEMANTIC COLOR TOKENS — Components reference these
+   * ============================================================ */
+
+  --surface-primary: var(--color-warm-white);
+  --surface-card: var(--color-cream);
+  --surface-elevated: #FFFFFF;
+
+  --text-primary: var(--color-charcoal);
+  --text-secondary: var(--color-slate);
+  --text-tertiary: var(--color-slate-light);
+  --text-inverse: #FFFFFF;
+
+  --action-primary: var(--color-terracotta);
+  --action-primary-hover: var(--color-terracotta-hover);
+  --action-primary-active: var(--color-terracotta-active);
+  --action-secondary: var(--color-sage);
+  --action-secondary-hover: var(--color-sage-hover);
+
+  --border-subtle: rgba(44, 44, 44, 0.08);
+  --border-default: rgba(44, 44, 44, 0.12);
+  --border-focus: var(--color-terracotta);
+
+  /* ============================================================
+   * TYPOGRAPHY
+   * ============================================================ */
+
+  --font-family-sans: 'Source Sans 3', 'Source Sans Pro', -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Scale — rem-based for accessibility */
+  --font-size-display: 1.75rem;    /* 28px */
+  --font-size-h1: 1.25rem;         /* 20px */
+  --font-size-h2: 1.125rem;        /* 18px */
+  --font-size-body: 1rem;           /* 16px */
+  --font-size-caption: 0.8125rem;   /* 13px */
+  --font-size-small: 0.75rem;       /* 12px */
+
+  --font-weight-regular: 400;
+  --font-weight-semibold: 600;
+
+  --line-height-display: 1.2;
+  --line-height-h1: 1.2;
+  --line-height-h2: 1.3;
+  --line-height-body: 1.5;
+  --line-height-caption: 1.385;
+  --line-height-small: 1.333;
+
+  --letter-spacing-display: -0.01em;
+  --letter-spacing-h1: -0.005em;
+  --letter-spacing-caption: 0.005em;
+  --letter-spacing-small: 0.01em;
+  --letter-spacing-button: 0.01em;
+
+  /* ============================================================
+   * SPACING — 4px base grid
+   * ============================================================ */
+
+  --space-0: 0px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Semantic spacing */
+  --space-card-padding: 20px;
+  --space-card-gap: 12px;
+  --space-content-gap: 24px;
+  --space-screen-margin: 20px;
+  --space-section-gap: 32px;
+  --space-input-padding-x: 16px;
+  --space-input-padding-y: 12px;
+  --space-button-padding-x: 24px;
+  --space-button-padding-y: 14px;
+
+  /* ============================================================
+   * BORDER RADIUS
+   * ============================================================ */
+
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* ============================================================
+   * SHADOWS — warm-tinted (not pure black)
+   * ============================================================ */
+
+  --shadow-sm: 0 1px 3px rgba(44, 44, 44, 0.06),
+               0 1px 2px rgba(44, 44, 44, 0.04);
+  --shadow-md: 0 4px 12px rgba(44, 44, 44, 0.08),
+               0 2px 4px rgba(44, 44, 44, 0.04);
+  --shadow-lg: 0 12px 32px rgba(44, 44, 44, 0.12),
+               0 4px 8px rgba(44, 44, 44, 0.06);
+
+  /* ============================================================
+   * MOTION & TRANSITIONS
+   * ============================================================ */
+
+  --duration-instant: 100ms;
+  --duration-fast: 200ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+
+  --easing-default: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --easing-enter: cubic-bezier(0, 0, 0.2, 1);
+  --easing-exit: cubic-bezier(0.4, 0, 1, 1);
+  --easing-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --transition-fast: var(--duration-fast) var(--easing-default);
+  --transition-normal: var(--duration-normal) var(--easing-default);
+  --transition-enter: var(--duration-fast) var(--easing-enter);
+
+  /* ============================================================
+   * TOUCH TARGETS
+   * ============================================================ */
+
+  --tap-target-min: 44px;
+  --tap-target-primary: 56px;
+  --tap-target-nav: 48px;
+
+  /* ============================================================
+   * ICONS
+   * ============================================================ */
+
+  --icon-size-sm: 16px;
+  --icon-size-md: 24px;
+  --icon-size-lg: 32px;
+  --icon-size-xl: 48px;
+  --icon-stroke: 2px;
+}
+
+/* ============================================================
+ * ANIMATIONS
+ * ============================================================ */
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes checkmark {
+  0% { stroke-dashoffset: 24; }
+  50% { stroke-dashoffset: 0; transform: scale(1.1); }
+  100% { stroke-dashoffset: 0; transform: scale(1); }
+}
+
+/* ============================================================
+ * REDUCED MOTION
+ * ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

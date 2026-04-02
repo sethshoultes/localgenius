@@ -1,0 +1,157 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import './tokens.css';
+
+/* ============================================================
+ * BASE STYLES
+ * ============================================================ */
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    font-family: var(--font-family-sans);
+    font-size: var(--font-size-body);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height-body);
+    color: var(--text-primary);
+    background-color: var(--surface-primary);
+  }
+
+  ::selection {
+    background-color: var(--color-terracotta-light);
+    color: var(--text-primary);
+  }
+
+  /* Focus styles — visible only for keyboard navigation */
+  :focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Headings */
+  h1 {
+    font-size: var(--font-size-h1);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-h1);
+    letter-spacing: var(--letter-spacing-h1);
+    color: var(--text-primary);
+  }
+
+  h2 {
+    font-size: var(--font-size-h2);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-h2);
+    color: var(--text-primary);
+  }
+
+  /* Prevent iOS text size inflation */
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Smooth scrolling (respects reduced motion via tokens.css) */
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* ============================================================
+ * COMPONENT UTILITIES
+ * ============================================================ */
+
+@layer components {
+  /* Card base — shared by ApprovalCard, ReportCard, ReviewCard */
+  .card {
+    background-color: var(--surface-elevated);
+    border-radius: var(--radius-md);
+    padding: var(--space-card-padding);
+    box-shadow: var(--shadow-md);
+  }
+
+  .card-subtle {
+    background-color: var(--surface-card);
+    border-radius: var(--radius-md);
+    padding: var(--space-card-padding);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Screen container — enforces margins */
+  .screen-container {
+    padding-left: var(--space-screen-margin);
+    padding-right: var(--space-screen-margin);
+    width: 100%;
+  }
+
+  /* Thread max-width constraint for desktop */
+  .thread-container {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  @media (min-width: 1024px) {
+    .thread-container {
+      max-width: 640px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+
+  /* Digest max-width for desktop */
+  .digest-container {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  @media (min-width: 1024px) {
+    .digest-container {
+      max-width: 720px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+}
+
+/* ============================================================
+ * UTILITY OVERRIDES
+ * ============================================================ */
+
+@layer utilities {
+  /* Animation entrance for thread messages */
+  .animate-in {
+    animation: fadeUp var(--duration-fast) var(--easing-enter) both;
+  }
+
+  /* Staggered reveal for onboarding cards */
+  .reveal-stagger-1 { animation-delay: 0ms; }
+  .reveal-stagger-2 { animation-delay: 150ms; }
+  .reveal-stagger-3 { animation-delay: 300ms; }
+  .reveal-stagger-4 { animation-delay: 450ms; }
+
+  /* Loading glow */
+  .loading-glow {
+    animation: pulseGlow 1500ms ease-in-out infinite;
+    background-color: var(--color-terracotta-light);
+    border-radius: var(--radius-md);
+  }
+
+  /* Safe area padding for iOS */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

@@ -29,7 +29,7 @@ interface UseVoiceInputReturn {
 
 export function useVoiceInput({
   onTranscription,
-  transcribeUrl = process.env.NEXT_PUBLIC_VOICE_API_URL || 'https://localgenius-sites.pages.dev/api/voice/transcribe',
+  transcribeUrl = '/api/voice/transcribe',
 }: UseVoiceInputOptions): UseVoiceInputReturn {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -64,8 +64,12 @@ export function useVoiceInput({
       mediaRecorder.start();
       setIsRecording(true);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to access microphone';
-      setError(message);
+      const isPermissionDenied = err instanceof Error && err.name === 'NotAllowedError';
+      setError(
+        isPermissionDenied
+          ? "I need mic access to listen. Check your browser's address bar to allow it."
+          : "I couldn't access your microphone. Want to type instead?",
+      );
       setIsRecording(false);
     }
   }, []);
@@ -102,15 +106,13 @@ export function useVoiceInput({
       const formData = new FormData();
       formData.append('audio', audioBlob, 'audio.webm');
 
-      // Get auth token from cookie or localStorage
-      const token = getCookie('auth') || localStorage.getItem('auth_token');
-
-      // Send to transcription endpoint
+      // Send to transcription endpoint — uses lg_session httpOnly cookie
+      // via credentials: 'include'. The Cloudflare endpoint also accepts
+      // Bearer token from the session cookie (forwarded by the middleware).
       const response = await fetch(transcribeUrl, {
         method: 'POST',
         body: formData,
         credentials: 'include',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
       if (!response.ok) {
@@ -118,14 +120,13 @@ export function useVoiceInput({
       }
 
       const data = await response.json();
-      const transcribedText = data.text || '';
+      const transcribedText = data.data?.text || data.text || '';
 
       if (transcribedText.trim()) {
         onTranscription(transcribedText);
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Transcription failed';
-      setError(message);
+      setError("I couldn't make that out. Want to try again or type it?");
     } finally {
       setIsTranscribing(false);
     }
@@ -140,18 +141,3 @@ export function useVoiceInput({
   };
 }
 
-/**
- * Helper to read cookie value by name
- */
-function getCookie(name: string): string | null {
-  if (typeof document === 'undefined') return null;
-  const nameEQ = `${name}=`;
-  const cookies = document.cookie.split(';');
-  for (const cookie of cookies) {
-    const trimmed = cookie.trim();
-    if (trimmed.startsWith(nameEQ)) {
-      return trimmed.substring(nameEQ.length);
-    }
-  }
-  return null;
-}

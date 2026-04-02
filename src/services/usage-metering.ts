@@ -1,13 +1,17 @@
 /**
- * Usage Metering Service — AI Cost Control
+ * Usage Metering Service — AI Cost Tracking + Upsell Engine
  *
- * Tracks AI token usage per business per month. Enforces the 15%
+ * Tracks AI token usage per business per month against the 15%
  * revenue ceiling from market-fit.md:
- *   - $29 user → $4.35 AI cost limit
- *   - $79 user → $11.85 AI cost limit
+ *   - $29 user → $4.35 AI cost budget
+ *   - $79 user → $11.85 AI cost budget
  *
- * When a user approaches the limit, degrades to Haiku for non-critical
- * tasks. Alerts admin when any user exceeds 80% of their budget.
+ * Jensen Board Review #2: NEVER silently degrade quality. Power users
+ * are your best users — punishing them is how you lose them.
+ *
+ * Instead: at 80% budget, show an upsell prompt to upgrade to Pro.
+ * At 90%, alert admin. Always keep Sonnet for quality.
+ * The cost ceiling is a business metric, not a user punishment.
  */
 
 import { db } from "@/lib/db";
@@ -29,8 +33,8 @@ const PLAN_LIMITS_CENTS: Record<string, number> = {
   franchise: 1185,
 };
 
-const DEGRADATION_THRESHOLD = 0.80; // Start degrading at 80% of budget
-const ALERT_THRESHOLD = 0.90;       // Alert admin at 90%
+const UPSELL_THRESHOLD = 0.80;  // Show upsell prompt at 80% — they're a power user
+const ALERT_THRESHOLD = 0.90;   // Alert admin at 90%
 
 // ─── Usage Tracking ───────────────────────────────────────────────────────────
 
@@ -40,9 +44,10 @@ interface UsageData {
   estimatedCostCents: number;
   budgetCents: number;
   budgetUsedPercent: number;
-  shouldDegrade: boolean;
-  shouldAlert: boolean;
-  model: string; // recommended model based on usage
+  shouldUpsell: boolean;    // Show upgrade prompt — this user loves the product
+  shouldAlert: boolean;     // Alert admin — approaching cost ceiling
+  upsellMessage: string | null;
+  model: string;            // ALWAYS Sonnet for quality — never degrade
 }
 
 /**
@@ -101,39 +106,50 @@ export async function getUsage(businessId: string): Promise<UsageData> {
 
   const usedPercent = budgetCents > 0 ? totalCostCents / budgetCents : 0;
 
+  const shouldUpsell = usedPercent >= UPSELL_THRESHOLD;
+  const isBasePlan = budgetCents === PLAN_LIMITS_CENTS.base;
+
   return {
     totalInputTokens: Number(usage?.totalInput || 0),
     totalOutputTokens: Number(usage?.totalOutput || 0),
     estimatedCostCents: totalCostCents,
     budgetCents,
     budgetUsedPercent: Math.round(usedPercent * 100),
-    shouldDegrade: usedPercent >= DEGRADATION_THRESHOLD,
+    shouldUpsell: shouldUpsell && isBasePlan,
     shouldAlert: usedPercent >= ALERT_THRESHOLD,
-    model: usedPercent >= DEGRADATION_THRESHOLD
-      ? "claude-haiku-4-5-20251001"
-      : "claude-sonnet-4-6-20250514",
+    upsellMessage: shouldUpsell && isBasePlan
+      ? "You're using LocalGenius a lot — that's great! Upgrade to Pro for unlimited AI generation, email campaigns, and local SEO optimization."
+      : null,
+    // NEVER degrade model quality. Power users are our best users.
+    // The cost ceiling is tracked for business health, not enforced on the user.
+    model: "claude-sonnet-4-6-20250514",
   };
 }
 
 /**
- * Get the recommended model for a business based on usage budget.
- * Critical tasks (conversation, review responses) stay on Sonnet until 95%.
- * Non-critical (digest, SEO analysis, insights) degrade to Haiku at 80%.
+ * Get the recommended model for a business.
+ *
+ * Jensen Board Review #2: ALWAYS return Sonnet for user-facing tasks.
+ * Haiku is used ONLY for internal batch operations (digest, analytics
+ * rollup, SEO analysis) where the user never sees the output directly.
+ * The `batch` parameter indicates internal-only operations.
  */
 export async function getModel(
   businessId: string,
-  critical: boolean = false
+  batch: boolean = false
 ): Promise<"claude-sonnet-4-6-20250514" | "claude-haiku-4-5-20251001"> {
+  // Batch operations (digest gen, analytics, SEO) use Haiku for cost efficiency
+  // User-facing operations (conversation, content, reviews) ALWAYS use Sonnet
+  return batch ? "claude-haiku-4-5-20251001" : "claude-sonnet-4-6-20250514";
+}
+
+/**
+ * Check if the business should see an upsell prompt.
+ * Returns the prompt message or null.
+ */
+export async function checkUpsell(businessId: string): Promise<string | null> {
   const usage = await getUsage(businessId);
-
-  if (critical) {
-    // Critical tasks only degrade at 95%
-    return usage.budgetUsedPercent >= 95
-      ? "claude-haiku-4-5-20251001"
-      : "claude-sonnet-4-6-20250514";
-  }
-
-  return usage.model as "claude-sonnet-4-6-20250514" | "claude-haiku-4-5-20251001";
+  return usage.upsellMessage;
 }
 
 /**

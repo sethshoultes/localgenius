@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useState, useEffect } from 'react';
 import WeeklyDigest from '@/components/digest/WeeklyDigest';
 import ErrorBanner from '@/components/shared/ErrorBanner';

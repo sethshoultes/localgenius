@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import ConversationThread, { type ThreadMessage } from '@/components/conversation/ConversationThread';
 import QuickActions from '@/components/conversation/QuickActions';

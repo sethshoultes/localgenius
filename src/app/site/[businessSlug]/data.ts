@@ -209,7 +209,7 @@ function getDemoSite(slug: string): SiteData | null {
       menuHighlights: [
         { name: "Mole Poblano", description: "Slow-simmered with 22 ingredients, served over chicken", price: "$19", image: "https://images.unsplash.com/photo-1615870216519-2f9fa575fa5c?w=600&q=80" },
         { name: "Carnitas Plate", description: "Fourteen-hour braised pork, crispy edges, cilantro rice", price: "$17", image: "https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=600&q=80" },
-        { name: "Tamales (3)", description: "Corn masa in banana leaf — chicken tinga, rajas, or black bean", price: "$14", image: "https://images.unsplash.com/photo-1604467707321-70d009801bf9?w=600&q=80" },
+        { name: "Tamales (3)", description: "Corn masa in banana leaf — chicken tinga, rajas, or black bean", price: "$14", image: "https://images.unsplash.com/photo-1586511925558-a4c6376fe65f?w=600&q=80" },
         { name: "Churros con Cajeta", description: "Crisp cinnamon dough with warm goat-milk caramel", price: "$9", image: "https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=600&q=80" },
       ],
       hours: { Monday: "Closed", Tuesday: "11am–9pm", Wednesday: "11am–9pm", Thursday: "11am–9pm", Friday: "11am–10pm", Saturday: "10am–10pm", Sunday: "10am–8pm", notes: "Kitchen closes 30 min before close" },

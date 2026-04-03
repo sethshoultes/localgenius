@@ -103,11 +103,45 @@ export default async function MenuPage(props: PageProps) {
 
         {/* Menu Section */}
         <section className="menu-section">
-          <div className="s-container menu-content">
-            <h1>Menu Coming Soon</h1>
-            <p>We're preparing a digital menu for {site.name}.</p>
-            <p>This feature will showcase your offerings, prices, and descriptions in a beautiful, mobile-friendly format.</p>
-            <a href={`/site/${businessSlug}`} className="menu-link">Back to Main Site</a>
+          <div className="s-container">
+            <h1 style={{ fontFamily: "'Lora', Georgia, serif", fontSize: "2rem", textAlign: "center", marginBottom: "0.5rem" }}>
+              {site.name} Menu
+            </h1>
+            <p style={{ textAlign: "center", color: "#6B7280", marginBottom: "2.5rem" }}>{site.tagline}</p>
+
+            {site.menuHighlights.length > 0 ? (
+              <div style={{ display: "grid", gap: "1.5rem", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
+                {site.menuHighlights.map((item, i) => (
+                  <div key={i} style={{ background: "#fff", borderRadius: "0.75rem", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+                    {item.image && (
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        loading="lazy"
+                        width={600}
+                        height={400}
+                        style={{ width: "100%", height: "200px", objectFit: "cover" }}
+                      />
+                    )}
+                    <div style={{ padding: "1.25rem" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "0.5rem" }}>
+                        <h3 style={{ fontFamily: "'Lora', Georgia, serif", fontWeight: 700, fontSize: "1.1rem", margin: 0 }}>{item.name}</h3>
+                        <span style={{ fontWeight: 600, color: "#A35535", whiteSpace: "nowrap", marginLeft: "1rem" }}>{item.price}</span>
+                      </div>
+                      <p style={{ color: "#6B7280", fontSize: "0.875rem", margin: 0, lineHeight: 1.5 }}>{item.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ textAlign: "center", padding: "3rem 0" }}>
+                <p style={{ color: "#6B7280" }}>Menu coming soon.</p>
+              </div>
+            )}
+
+            <div style={{ textAlign: "center", marginTop: "2.5rem" }}>
+              <a href={`/site/${businessSlug}`} className="menu-link">Back to {site.name}</a>
+            </div>
           </div>
         </section>
 

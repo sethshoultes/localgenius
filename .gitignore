@@ -10,3 +10,4 @@ next-env.d.ts
 test-results/
 .next-stale-backup/
 playwright-report/
+.next-stale-*

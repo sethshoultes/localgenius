@@ -664,6 +664,34 @@ export const insightActions = pgTable(
   ]
 );
 
+// ─── Inference Logs ──────────────────────────────────────────────────────────
+// Structured telemetry for every AI call. Jensen Issue #8.
+// Tracks model, tokens, latency, success/failure across all providers
+// (Claude, Llama, Whisper, DistilBERT, SDXL).
+
+export const inferenceLogs = pgTable(
+  "inference_logs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    model: text("model").notNull(),
+    provider: text("provider").notNull(), // claude, llama, whisper, distilbert, sdxl
+    taskType: text("task_type"), // conversation, content_draft, sentiment, transcription, image
+    tokensInput: integer("tokens_input"),
+    tokensOutput: integer("tokens_output"),
+    latencyMs: integer("latency_ms").notNull(),
+    success: boolean("success").notNull().default(true),
+    errorMessage: text("error_message"),
+    businessId: uuid("business_id"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("idx_inference_logs_model").on(table.model, table.createdAt),
+    index("idx_inference_logs_business").on(table.businessId, table.createdAt),
+  ]
+);
+
 export const competitors = pgTable(
   "competitors",
   {

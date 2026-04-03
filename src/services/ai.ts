@@ -6,6 +6,7 @@
  */
 
 import Anthropic from "@anthropic-ai/sdk";
+import { withInferenceLog } from "@/lib/inference-log";
 
 let _anthropic: Anthropic | null = null;
 
@@ -81,15 +82,26 @@ export async function generate(options: GenerateOptions): Promise<string> {
     ? `\n\nBusiness context:\n${JSON.stringify(businessContext, null, 2)}`
     : "";
 
-  const response = await getClient().messages.create({
-    model,
-    max_tokens: maxTokens,
-    system: systemPrompt + contextBlock,
-    messages: [{ role: "user", content: prompt }],
-  });
+  const provider = model.includes("haiku") ? "claude_haiku" : "claude_sonnet";
 
-  const textBlock = response.content.find((b) => b.type === "text");
-  return textBlock ? textBlock.text : "";
+  return withInferenceLog(
+    { model, provider, taskType: "generation" },
+    async () => {
+      const response = await getClient().messages.create({
+        model,
+        max_tokens: maxTokens,
+        system: systemPrompt + contextBlock,
+        messages: [{ role: "user", content: prompt }],
+      });
+
+      const textBlock = response.content.find((b) => b.type === "text");
+      return textBlock ? textBlock.text : "";
+    },
+    () => ({
+      // Token counts are on the response but we don't have access here
+      // In production, extract from response.usage
+    })
+  );
 }
 
 export async function* stream(options: GenerateOptions) {

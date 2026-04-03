@@ -158,6 +158,28 @@ export function useAuth() {
   useEffect(() => {
     let mounted = true;
 
+    function scheduleRefresh() {
+      if (refreshTimer.current) clearTimeout(refreshTimer.current);
+
+      // Refresh 3 minutes before expiry (token lives 15 min)
+      refreshTimer.current = setTimeout(async () => {
+        const success = await refreshSession();
+        if (success) {
+          scheduleRefresh(); // re-schedule after successful refresh
+        } else {
+          // Session expired — redirect to login
+          setState({
+            user: null,
+            business: null,
+            plan: null,
+            isLoading: false,
+            isAuthenticated: false,
+          });
+          window.location.href = '/login';
+        }
+      }, 12 * 60 * 1000); // 12 minutes
+    }
+
     async function loadSession() {
       const session = await fetchSession();
 
@@ -192,28 +214,6 @@ export function useAuth() {
       if (refreshTimer.current) clearTimeout(refreshTimer.current);
     };
   }, []);
-
-  function scheduleRefresh() {
-    if (refreshTimer.current) clearTimeout(refreshTimer.current);
-
-    // Refresh 3 minutes before expiry (token lives 15 min)
-    refreshTimer.current = setTimeout(async () => {
-      const success = await refreshSession();
-      if (success) {
-        scheduleRefresh(); // re-schedule after successful refresh
-      } else {
-        // Session expired — redirect to login
-        setState({
-          user: null,
-          business: null,
-          plan: null,
-          isLoading: false,
-          isAuthenticated: false,
-        });
-        window.location.href = '/login';
-      }
-    }, 12 * 60 * 1000); // 12 minutes
-  }
 
   const logout = useCallback(async () => {
     if (refreshTimer.current) clearTimeout(refreshTimer.current);

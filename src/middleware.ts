@@ -156,7 +156,7 @@ export async function middleware(request: NextRequest) {
     return new NextResponse(null, {
       status: 204,
       headers: {
-        "Access-Control-Allow-Origin": process.env.CORS_ALLOWED_ORIGIN || "*",
+        "Access-Control-Allow-Origin": process.env.CORS_ALLOWED_ORIGIN || "https://localgenius.company",
         "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type, Authorization",
         "Access-Control-Max-Age": "86400",
@@ -192,7 +192,7 @@ export async function middleware(request: NextRequest) {
 
   response.headers.set(
     "Access-Control-Allow-Origin",
-    process.env.CORS_ALLOWED_ORIGIN || "*"
+    process.env.CORS_ALLOWED_ORIGIN || "https://localgenius.company"
   );
 
   if (!skipRateLimit(pathname)) {

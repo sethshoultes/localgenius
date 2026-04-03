@@ -86,10 +86,10 @@ export default async function SitePage({ params }: { params: Promise<{ businessS
         .s-hero h1 { font-family: 'Lora', Georgia, serif; font-size: 2.25rem; font-weight: 700; line-height: 1.2; margin: 0 0 1rem; color: #FFFFFF !important; }
         .s-hero p { font-size: 1.125rem; opacity: 0.92; margin: 0 0 2rem; color: #FFFFFF !important; }
         .s-btn { display: inline-block; font-family: 'Source Sans 3', sans-serif; font-weight: 600; font-size: 0.875rem; padding: 0.75rem 1.75rem; border-radius: 0.5rem; text-decoration: none; transition: background 150ms; border: none; cursor: pointer; }
-        .s-btn--primary { background: #C4704B; color: #fff; }
-        .s-btn--primary:hover { background: #A35535; color: #fff; }
-        .s-btn--outline { background: transparent; color: #fff; border: 2px solid rgba(255,255,255,0.6); }
-        .s-btn--outline:hover { background: rgba(255,255,255,0.15); color: #fff; }
+        .site-page a.s-btn--primary { background: #C4704B; color: #FFFFFF !important; }
+        .site-page a.s-btn--primary:hover { background: #A35535; color: #FFFFFF !important; }
+        .site-page a.s-btn--outline { background: transparent; color: #FFFFFF !important; border: 2px solid rgba(255,255,255,0.7); }
+        .site-page a.s-btn--outline:hover { background: rgba(255,255,255,0.15); color: #FFFFFF !important; }
         .s-about p { margin-bottom: 1rem; color: #6B7280; line-height: 1.7; }
         .s-about blockquote { font-family: 'Lora', Georgia, serif; font-style: italic; font-size: 1.25rem; color: #A35535; border-left: 3px solid #C4704B; padding-left: 1.25rem; margin: 1rem 0 0; line-height: 1.5; }
         .s-menu-grid { display: grid; gap: 1.5rem; grid-template-columns: 1fr; }

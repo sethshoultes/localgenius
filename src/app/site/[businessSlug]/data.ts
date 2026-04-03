@@ -178,7 +178,10 @@ const DEMO_SLUGS = ["marias-kitchen-austin", "bright-smile-dental-austin", "brig
 
 function getDemoSite(slug: string): SiteData | null {
   // Allow short aliases
-  const resolved = slug === "bright-smile" ? "bright-smile-dental-austin" : slug;
+  const resolved =
+    slug === "bright-smile" ? "bright-smile-dental-austin" :
+    slug === "marias-kitchen" ? "marias-kitchen-austin" :
+    slug;
 
   const demos: Record<string, SiteData> = {
     "marias-kitchen-austin": {

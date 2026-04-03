@@ -19,7 +19,7 @@ const COOKIE_NAME = "lg_session";
 // ─── Route Classification ─────────────────────────────────────────────────────
 
 // Public pages — no auth required
-const PUBLIC_PAGES = ["/", "/about", "/pricing", "/demo", "/site", "/sites", "/login", "/register", "/landing", "/welcome", "/forgot-password", "/reset-password"];
+const PUBLIC_PAGES = ["/", "/about", "/pricing", "/demo", "/site", "/sites", "/privacy", "/terms", "/login", "/register", "/landing", "/welcome", "/forgot-password", "/reset-password"];
 
 // Public page patterns — checked with startsWith
 const PUBLIC_PAGE_PATTERNS = ["/site/"];
@@ -133,8 +133,18 @@ export async function middleware(request: NextRequest) {
 
   // ─── Page Routes ────────────────────────────────────────────────────────
   if (!pathname.startsWith("/api/")) {
-    // Public pages pass through
+    // Public pages pass through (includes unknown routes → Next.js 404)
     if (isPublicPage(pathname)) {
+      return NextResponse.next();
+    }
+
+    // Only protect specific app routes — everything else passes through
+    // to Next.js (which shows 404 for unknown pages)
+    const PROTECTED_PREFIXES = ["/app", "/digest"];
+    const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
+
+    if (!isProtected) {
+      // Unknown route — let Next.js handle it (will show 404)
       return NextResponse.next();
     }
 

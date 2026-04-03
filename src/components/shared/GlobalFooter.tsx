@@ -43,7 +43,13 @@ export default function GlobalFooter() {
               Sites
             </Link>
             <span>·</span>
-            <span>Austin, TX</span>
+            <Link href="/privacy" className="hover:text-charcoal transition-colors no-underline text-caption text-slate">
+              Privacy
+            </Link>
+            <span>·</span>
+            <Link href="/terms" className="hover:text-charcoal transition-colors no-underline text-caption text-slate">
+              Terms
+            </Link>
           </div>
 
           {/* Tagline */}

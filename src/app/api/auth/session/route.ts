@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       .limit(1);
 
     const [biz] = await db
-      .select({ id: businesses.id, name: businesses.name, vertical: businesses.vertical })
+      .select({ id: businesses.id, name: businesses.name, vertical: businesses.vertical, onboardingCompletedAt: businesses.onboardingCompletedAt })
       .from(businesses)
       .where(eq(businesses.id, payload.biz as string))
       .limit(1);

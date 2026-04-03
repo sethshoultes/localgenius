@@ -26,6 +26,7 @@ import {
 import { eq } from "drizzle-orm";
 import { generateWebsite } from "./website-generator";
 import { provisionSite as provisionCloudfareSite } from "./sites";
+import { provisionDomain } from "./domain-provisioning";
 import { generateSocialPost, generate } from "./ai";
 import { syncReviews } from "./reviews";
 import { runAudit } from "./seo";
@@ -131,6 +132,31 @@ export async function runOnboardingPipeline(
   } catch (err) {
     result.errors.push(`Website: ${errorMsg(err)}`);
     logger.error("Pipeline: website generation failed", {
+      businessId: input.businessId,
+      error: errorMsg(err),
+    });
+  }
+
+  // ─── Step 1b: Provision Subdomain + Email Domain ───────────────────────
+  // Non-blocking: failures don't affect the rest of onboarding.
+  try {
+    const domainResult = await provisionDomain(input.businessId, input.organizationId);
+    if (domainResult.dnsProvisioned) {
+      logger.info("Pipeline: subdomain provisioned", {
+        businessId: input.businessId,
+        subdomain: domainResult.subdomain,
+        siteUrl: domainResult.siteUrl,
+      });
+    }
+    if (domainResult.errors.length > 0) {
+      logger.warn("Pipeline: domain provisioning partial", {
+        businessId: input.businessId,
+        errors: domainResult.errors,
+      });
+    }
+  } catch (err) {
+    // Non-blocking — domain provisioning is a nice-to-have
+    logger.error("Pipeline: domain provisioning failed", {
       businessId: input.businessId,
       error: errorMsg(err),
     });

@@ -87,10 +87,27 @@ export async function generate(options: GenerateOptions): Promise<string> {
   return withInferenceLog(
     { model, provider, taskType: "generation" },
     async () => {
+      // Prompt caching: system prompt cached for 5 min at 90% token discount.
+      // cache_control on the system block tells Anthropic to cache this prefix.
+      // Subsequent calls reuse cached tokens — massive cost reduction for
+      // repeated system prompts (every conversation, every digest, every draft).
+      const systemBlocks: Array<{ type: "text"; text: string; cache_control?: { type: "ephemeral" } }> = [
+        {
+          type: "text",
+          text: systemPrompt,
+          cache_control: { type: "ephemeral" },
+        },
+      ];
+
+      // Business context is per-call (not cached) — appended as a separate block
+      if (contextBlock) {
+        systemBlocks.push({ type: "text", text: contextBlock });
+      }
+
       const response = await getClient().messages.create({
         model,
         max_tokens: maxTokens,
-        system: systemPrompt + contextBlock,
+        system: systemBlocks,
         messages: [{ role: "user", content: prompt }],
       });
 
@@ -117,10 +134,18 @@ export async function* stream(options: GenerateOptions) {
     ? `\n\nBusiness context:\n${JSON.stringify(businessContext, null, 2)}`
     : "";
 
+  // Prompt caching for streaming — same cache_control as generate()
+  const streamSystemBlocks: Array<{ type: "text"; text: string; cache_control?: { type: "ephemeral" } }> = [
+    { type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } },
+  ];
+  if (contextBlock) {
+    streamSystemBlocks.push({ type: "text", text: contextBlock });
+  }
+
   const messageStream = getClient().messages.stream({
     model,
     max_tokens: maxTokens,
-    system: systemPrompt + contextBlock,
+    system: streamSystemBlocks,
     messages: [{ role: "user", content: prompt }],
   });
 

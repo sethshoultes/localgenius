@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Button from '@/components/shared/Button';
-import { register, ApiError } from '@/lib/api';
+import { register } from '@/lib/auth-client';
 
 const BUSINESS_TYPES = [
   { value: 'restaurant', label: 'Restaurant' },
@@ -48,24 +48,23 @@ export default function RegisterPage() {
     if (password.length < 8) { setError('Password needs at least 8 characters.'); return; }
 
     setIsLoading(true);
-    try {
-      await register({
-        name: name.trim(),
-        email,
-        password,
-        businessName: businessName.trim(),
-        businessType,
-        city: city.trim(),
-        state: state.trim().toUpperCase(),
-      });
-      router.push('/welcome');
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 409) {
-        setError('That email is already in use. Want to sign in instead?');
-      } else {
-        setError('Something went wrong. Give it another try.');
-      }
-    } finally {
+    const result = await register({
+      name: name.trim(),
+      email,
+      password,
+      businessName: businessName.trim(),
+      businessType,
+      city: city.trim(),
+      state: state.trim().toUpperCase(),
+    });
+
+    if (result.success) {
+      // Cookie is set by the API response. Redirect to onboarding.
+      // Use window.location for a full page load so the cookie is
+      // picked up by the middleware on the next request.
+      window.location.href = '/welcome';
+    } else {
+      setError(result.error || 'Something went wrong. Give it another try.');
       setIsLoading(false);
     }
   };

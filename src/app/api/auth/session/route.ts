@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       data: {
         user: { id: user.id, email: user.email, name: user.name },
-        business: biz ? { id: biz.id, name: biz.name, vertical: biz.vertical } : null,
+        business: biz ? { id: biz.id, name: biz.name, vertical: biz.vertical, onboardingCompleted: !!biz.onboardingCompletedAt } : null,
         plan: (payload.plan as string) || 'base',
       },
     });

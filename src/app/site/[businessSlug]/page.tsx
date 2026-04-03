@@ -79,12 +79,12 @@ export default async function SitePage({ params }: { params: Promise<{ businessS
         .s-nav-links { display: flex; gap: 1.5rem; list-style: none; margin: 0; padding: 0; }
         .s-nav-links a { font-size: 0.875rem; font-weight: 500; color: #6B7280; text-decoration: none; transition: color 150ms; }
         .s-nav-links a:hover { color: #A35535; }
-        .s-hero { position: relative; min-height: 80vh; display: flex; align-items: center; justify-content: center; text-align: center; color: #fff; overflow: hidden; }
+        .s-hero { position: relative; min-height: 80vh; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; }
         .s-hero-bg { position: absolute; inset: 0; background-size: cover; background-position: center; z-index: 0; }
-        .s-hero-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(28,25,23,0.4), rgba(28,25,23,0.7)); z-index: 1; }
-        .s-hero-content { position: relative; z-index: 2; max-width: 700px; padding: 2rem 1.25rem; }
-        .s-hero h1 { font-family: 'Lora', Georgia, serif; font-size: 2.25rem; font-weight: 700; line-height: 1.2; margin: 0 0 1rem; }
-        .s-hero p { font-size: 1.125rem; opacity: 0.88; margin: 0 0 2rem; }
+        .s-hero-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(28,25,23,0.45), rgba(28,25,23,0.75)); z-index: 1; }
+        .s-hero-content { position: relative; z-index: 2; max-width: 700px; padding: 2rem 1.25rem; color: #FFFFFF !important; }
+        .s-hero h1 { font-family: 'Lora', Georgia, serif; font-size: 2.25rem; font-weight: 700; line-height: 1.2; margin: 0 0 1rem; color: #FFFFFF !important; }
+        .s-hero p { font-size: 1.125rem; opacity: 0.92; margin: 0 0 2rem; color: #FFFFFF !important; }
         .s-btn { display: inline-block; font-family: 'Source Sans 3', sans-serif; font-weight: 600; font-size: 0.875rem; padding: 0.75rem 1.75rem; border-radius: 0.5rem; text-decoration: none; transition: background 150ms; border: none; cursor: pointer; }
         .s-btn--primary { background: #C4704B; color: #fff; }
         .s-btn--primary:hover { background: #A35535; color: #fff; }
@@ -144,8 +144,12 @@ export default async function SitePage({ params }: { params: Promise<{ businessS
             <h1>{site.hero.headline}</h1>
             <p>{site.hero.subheadline}</p>
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <a href="#menu" className="s-btn s-btn--primary">View Our Menu</a>
-              <a href={`tel:${site.phone.replace(/\D/g, '')}`} className="s-btn s-btn--outline">Call to Book</a>
+              <a href={site.vertical === 'restaurant' ? '#menu' : '#services'} className="s-btn s-btn--primary">
+                {site.vertical === 'restaurant' ? 'View Our Menu' : 'View Services'}
+              </a>
+              <a href={`tel:${site.phone.replace(/\D/g, '')}`} className="s-btn s-btn--outline">
+                {site.vertical === 'restaurant' ? 'Call to Book' : 'Book an Appointment'}
+              </a>
             </div>
           </div>
         </section>

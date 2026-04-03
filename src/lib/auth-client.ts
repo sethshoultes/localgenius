@@ -20,6 +20,7 @@ interface Business {
   id: string;
   name: string;
   vertical?: string;
+  onboardingCompleted?: boolean;
 }
 
 interface AuthState {

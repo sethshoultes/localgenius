@@ -53,7 +53,7 @@ export default function OnboardingPage() {
 
   // Guard: redirect already-onboarded users to the app
   useEffect(() => {
-    if (!authLoading && isAuthenticated && business?.vertical) {
+    if (!authLoading && isAuthenticated && business?.onboardingCompleted) {
       router.replace('/app');
     }
   }, [authLoading, isAuthenticated, business, router]);

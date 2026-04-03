@@ -13,6 +13,7 @@ import { isNull } from "drizzle-orm";
 
 export interface SiteData {
   name: string;
+  vertical: 'restaurant' | 'dental' | 'salon' | 'services' | 'other';
   tagline: string;
   phone: string;
   email: string;
@@ -103,6 +104,7 @@ export async function getSiteData(slug: string): Promise<SiteData | null> {
 
     return {
       name: biz.name,
+      vertical: (biz.vertical === 'restaurant' ? 'restaurant' : biz.vertical === 'dental' ? 'dental' : biz.vertical === 'salon' ? 'salon' : 'services') as SiteData['vertical'],
       tagline,
       phone: biz.phone || "(555) 000-0000",
       email: biz.email || "",
@@ -181,6 +183,7 @@ function getDemoSite(slug: string): SiteData | null {
   const demos: Record<string, SiteData> = {
     "marias-kitchen-austin": {
       name: "Maria's Kitchen",
+      vertical: "restaurant",
       tagline: "Real Tex-Mex. Real people. Since 2019.",
       phone: "(512) 555-0142",
       email: "hello@mariaskitchen.com",
@@ -212,6 +215,7 @@ function getDemoSite(slug: string): SiteData | null {
     },
     "bright-smile-dental-austin": {
       name: "Bright Smile Dental",
+      vertical: "dental",
       tagline: "Your neighborhood dentist since 2012.",
       phone: "(512) 555-0388",
       email: "hello@brightsmiledental.com",

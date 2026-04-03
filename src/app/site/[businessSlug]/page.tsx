@@ -47,6 +47,18 @@ export default async function SitePage({ params }: { params: Promise<{ businessS
 
   const fullAddress = `${site.address.street}, ${site.address.city}, ${site.address.state} ${site.address.zip}`;
 
+  const isRestaurant = site.vertical === 'restaurant';
+  const servicesLabel = isRestaurant ? 'From the Kitchen' : 'Our Services';
+  const servicesHeading = isRestaurant ? 'What to Order' : 'What We Offer';
+  const servicesNavLabel = isRestaurant ? 'Menu' : 'Services';
+  const ctaHeading = isRestaurant
+    ? 'Ready to taste what everyone is talking about?'
+    : `Ready to visit ${site.name}?`;
+  const ctaText = isRestaurant
+    ? 'Walk-ins are always welcome. For parties of 6 or more, give us a call.'
+    : 'New patients welcome. Give us a call to schedule your first visit.';
+  const ctaButton = isRestaurant ? 'Call to Book a Table' : 'Call to Schedule';
+
   return (
     <>
       <style>{`
@@ -117,7 +129,7 @@ export default async function SitePage({ params }: { params: Promise<{ businessS
           <div className="s-container s-nav-inner">
             <Link href={`/site/${businessSlug}`} className="s-nav-brand">{site.name}</Link>
             <ul className="s-nav-links">
-              <li><a href="#menu">Menu</a></li>
+              <li><a href="#menu">{servicesNavLabel}</a></li>
               <li><a href="#hours">Hours</a></li>
               <li><a href="#reviews">Reviews</a></li>
             </ul>
@@ -155,8 +167,8 @@ export default async function SitePage({ params }: { params: Promise<{ businessS
         {/* Menu Highlights */}
         <section className="s-section s-section--muted" id="menu">
           <div className="s-container">
-            <p className="s-label">From the Kitchen</p>
-            <h2 className="s-heading">What to Order</h2>
+            <p className="s-label">{servicesLabel}</p>
+            <h2 className="s-heading">{servicesHeading}</h2>
             <div className="s-menu-grid">
               {site.menuHighlights.map((item) => (
                 <div key={item.name} className="s-menu-card">
@@ -236,10 +248,10 @@ export default async function SitePage({ params }: { params: Promise<{ businessS
 
         {/* CTA Banner */}
         <section className="s-cta-banner">
-          <h2>Ready to taste what everyone is talking about?</h2>
-          <p>Walk-ins are always welcome. For parties of 6 or more, give us a call.</p>
+          <h2>{ctaHeading}</h2>
+          <p>{ctaText}</p>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <a href={`tel:${site.phone.replace(/\D/g, '')}`} className="s-btn s-btn--primary">Call to Book a Table</a>
+            <a href={`tel:${site.phone.replace(/\D/g, '')}`} className="s-btn s-btn--primary">{ctaButton}</a>
           </div>
         </section>
 

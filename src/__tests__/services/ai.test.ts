@@ -80,11 +80,11 @@ describe("generate", () => {
       businessContext: { name: "Maria's Kitchen", city: "Austin" },
     });
 
-    expect(mockCreate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        system: expect.stringContaining("Maria's Kitchen"),
-      })
-    );
+    // System is now an array of blocks with prompt caching
+    const call = mockCreate.mock.calls[0][0];
+    expect(call.system).toEqual(expect.arrayContaining([
+      expect.objectContaining({ type: "text", text: expect.stringContaining("Maria's Kitchen") }),
+    ]));
   });
 
   it("uses custom system prompt when provided", async () => {
@@ -98,9 +98,13 @@ describe("generate", () => {
       systemPrompt: "You are a custom assistant.",
     });
 
-    expect(mockCreate).toHaveBeenCalledWith(
+    // System blocks include cache_control for prompt caching
+    const call = mockCreate.mock.calls[0][0];
+    expect(call.system[0]).toEqual(
       expect.objectContaining({
-        system: "You are a custom assistant.",
+        type: "text",
+        text: "You are a custom assistant.",
+        cache_control: { type: "ephemeral" },
       })
     );
   });

@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from 'next';
+import Header from '@/components/shared/Header';
+import GlobalFooter from '@/components/shared/GlobalFooter';
 import '@/styles/globals.css';
 
 export const metadata: Metadata = {
@@ -62,8 +64,12 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="bg-warm-white text-charcoal antialiased">
-        {children}
+      <body className="bg-warm-white text-charcoal antialiased min-h-screen flex flex-col">
+        <Header />
+        <div className="flex-1 flex flex-col">
+          {children}
+        </div>
+        <GlobalFooter />
       </body>
     </html>
   );

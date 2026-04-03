@@ -154,9 +154,14 @@ export async function getAllSiteSlugs(): Promise<string[]> {
       .from(businesses)
       .where(isNull(businesses.deletedAt));
 
-    const dbSlugs = allBusinesses.map((b) => generateSlug(b.name, b.city));
+    // Filter out test/QA businesses from directory
+    const TEST_PREFIXES = ['e2e', 'test', 'qa', 'flow', 'verify', 'smoke'];
+    const realBusinesses = allBusinesses.filter(
+      (b) => !TEST_PREFIXES.some((p) => b.name.toLowerCase().startsWith(p))
+    );
+    const dbSlugs = realBusinesses.map((b) => generateSlug(b.name, b.city));
     // Add directory demos only if no DB match for that business
-    const dbNames = new Set(allBusinesses.map((b) => b.name.toLowerCase()));
+    const dbNames = new Set(realBusinesses.map((b) => b.name.toLowerCase()));
     const demoSlugs = DIRECTORY_SLUGS.filter((s) => {
       const demo = getDemoSite(s);
       return demo && !dbNames.has(demo.name.toLowerCase()) && !dbSlugs.includes(s);

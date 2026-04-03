@@ -1,7 +1,12 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { getSiteData, getAllSiteSlugs } from './data';
+import { getSiteData } from './data';
+
+// Force dynamic rendering — ensures notFound() returns real HTTP 404.
+// SSG with generateStaticParams can cache 200 status at the edge for
+// unknown slugs. Dynamic rendering guarantees correct status codes.
+export const dynamic = 'force-dynamic';
 
 /**
  * /site/[businessSlug] — Public business website
@@ -13,11 +18,6 @@ import { getSiteData, getAllSiteSlugs } from './data';
  * Design: warm Craft theme (Lora + Source Sans 3, terracotta accent).
  * Mobile-first. No JavaScript. Server-rendered.
  */
-
-export async function generateStaticParams() {
-  const slugs = await getAllSiteSlugs();
-  return slugs.map((slug) => ({ businessSlug: slug }));
-}
 
 export async function generateMetadata(
   { params }: { params: Promise<{ businessSlug: string }> }

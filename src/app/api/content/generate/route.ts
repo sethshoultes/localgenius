@@ -5,6 +5,7 @@ import { contentItems, actions, businesses } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { verifyAuth } from "@/api/middleware/auth";
 import { generate, generateSocialPost, generateReviewResponse } from "@/services/ai";
+import { startSpan, recordDuration, SpanStatusCode } from "@/lib/telemetry";
 
 const generateSchema = z.object({
   type: z.enum(["social_post", "review_response", "email_campaign", "website_content"]),
@@ -24,22 +25,44 @@ export async function POST(request: NextRequest) {
     if (!biz) return NextResponse.json({ error: { code: "NOT_FOUND", message: "Business not found" } }, { status: 404 });
 
     let generatedText: string;
-    switch (validated.type) {
-      case "social_post":
-        generatedText = await generateSocialPost({ name: biz.name, vertical: biz.vertical, city: biz.city }, validated.topic || "a great day at the business");
-        break;
-      case "review_response":
-        if (!validated.reviewData) return NextResponse.json({ error: { code: "VALIDATION_ERROR", message: "reviewData required" } }, { status: 400 });
-        generatedText = await generateReviewResponse({ name: biz.name }, validated.reviewData);
-        break;
-      case "email_campaign":
-        generatedText = await generate({ prompt: `Write a short email campaign for ${biz.name} (${biz.vertical} in ${biz.city}). Topic: ${validated.topic || "we miss you"}. Include subject line and body. Under 150 words.`, maxTokens: 512 });
-        break;
-      case "website_content":
-        generatedText = await generate({ prompt: `Write website copy for ${biz.name}, a ${biz.vertical} in ${biz.city}, ${biz.state}. Include: hero headline, about section, CTA. Warm, local, confident.`, maxTokens: 512 });
-        break;
-      default:
-        generatedText = "";
+    const span = startSpan("ai.content.generate", {
+      "ai.content_type": validated.type,
+      "ai.business_id": auth.businessId,
+      "ai.model": "claude-sonnet-4-20250514",
+    });
+    const aiStart = Date.now();
+
+    try {
+      switch (validated.type) {
+        case "social_post":
+          generatedText = await generateSocialPost({ name: biz.name, vertical: biz.vertical, city: biz.city }, validated.topic || "a great day at the business");
+          break;
+        case "review_response":
+          if (!validated.reviewData) {
+            span.setStatus({ code: SpanStatusCode.ERROR, message: "Missing reviewData" });
+            span.end();
+            return NextResponse.json({ error: { code: "VALIDATION_ERROR", message: "reviewData required" } }, { status: 400 });
+          }
+          generatedText = await generateReviewResponse({ name: biz.name }, validated.reviewData);
+          break;
+        case "email_campaign":
+          generatedText = await generate({ prompt: `Write a short email campaign for ${biz.name} (${biz.vertical} in ${biz.city}). Topic: ${validated.topic || "we miss you"}. Include subject line and body. Under 150 words.`, maxTokens: 512 });
+          break;
+        case "website_content":
+          generatedText = await generate({ prompt: `Write website copy for ${biz.name}, a ${biz.vertical} in ${biz.city}, ${biz.state}. Include: hero headline, about section, CTA. Warm, local, confident.`, maxTokens: 512 });
+          break;
+        default:
+          generatedText = "";
+      }
+
+      span.setAttribute("ai.output_length", generatedText.length);
+      span.setStatus({ code: SpanStatusCode.OK });
+    } catch (aiError) {
+      span.setStatus({ code: SpanStatusCode.ERROR, message: aiError instanceof Error ? aiError.message : "AI call failed" });
+      throw aiError;
+    } finally {
+      recordDuration("ai.content.generate.duration", aiStart, { type: validated.type });
+      span.end();
     }
 
     const [content] = await db.insert(contentItems).values({

@@ -5,6 +5,7 @@ import { conversations, messages, businesses } from "@/db/schema";
 import { eq, and, desc, lt } from "drizzle-orm";
 import { verifyAuth } from "@/api/middleware/auth";
 import { generate, stream } from "@/services/ai";
+import { startSpan, recordDuration, SpanStatusCode } from "@/lib/telemetry";
 
 const sendMessageSchema = z.object({
   content: z.string().min(1).max(10000),
@@ -119,11 +120,28 @@ export async function POST(
       });
     }
 
-    // Non-streaming fallback
-    const aiResponse = await generate({
-      prompt,
-      businessContext,
+    // Non-streaming fallback — with telemetry span
+    const convSpan = startSpan("ai.conversation.generate", {
+      "ai.business_id": auth.businessId,
+      "ai.conversation_id": conversationId,
+      "ai.model": "claude-sonnet-4-20250514",
     });
+    const convStart = Date.now();
+    let aiResponse: string;
+    try {
+      aiResponse = await generate({
+        prompt,
+        businessContext,
+      });
+      convSpan.setAttribute("ai.output_length", aiResponse.length);
+      convSpan.setStatus({ code: SpanStatusCode.OK });
+    } catch (aiErr) {
+      convSpan.setStatus({ code: SpanStatusCode.ERROR, message: aiErr instanceof Error ? aiErr.message : "AI failed" });
+      throw aiErr;
+    } finally {
+      recordDuration("ai.conversation.generate.duration", convStart, { conversation_id: conversationId });
+      convSpan.end();
+    }
 
     const [assistantMsg] = await db.insert(messages).values({
       conversationId,

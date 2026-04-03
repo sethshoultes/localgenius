@@ -153,16 +153,25 @@ export async function getAllSiteSlugs(): Promise<string[]> {
       .where(isNull(businesses.deletedAt));
 
     const dbSlugs = allBusinesses.map((b) => generateSlug(b.name, b.city));
-    const demoSlugs = DEMO_SLUGS.filter((s) => !dbSlugs.includes(s));
-    return [...dbSlugs, ...demoSlugs];
+    // Add directory demos only if no DB match for that business
+    const dbNames = new Set(allBusinesses.map((b) => b.name.toLowerCase()));
+    const demoSlugs = DIRECTORY_SLUGS.filter((s) => {
+      const demo = getDemoSite(s);
+      return demo && !dbNames.has(demo.name.toLowerCase()) && !dbSlugs.includes(s);
+    });
+    // Deduplicate
+    return [...new Set([...dbSlugs, ...demoSlugs])];
   } catch (error) {
     console.error("Error fetching all site slugs:", error);
-    return DEMO_SLUGS;
+    return DIRECTORY_SLUGS;
   }
 }
 
 // ─── Demo Sites ─────────────────────────────────────────────────────────────
 
+// Slugs shown in the /site directory page (no short aliases)
+const DIRECTORY_SLUGS = ["marias-kitchen-austin", "bright-smile-dental-austin"];
+// All slugs that resolve to demo data (includes aliases)
 const DEMO_SLUGS = ["marias-kitchen-austin", "bright-smile-dental-austin", "bright-smile"];
 
 function getDemoSite(slug: string): SiteData | null {

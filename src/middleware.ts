@@ -19,7 +19,7 @@ const COOKIE_NAME = "lg_session";
 // ─── Route Classification ─────────────────────────────────────────────────────
 
 // Public pages — no auth required
-const PUBLIC_PAGES = ["/", "/about", "/pricing", "/demo", "/sites", "/login", "/register", "/landing", "/welcome", "/forgot-password", "/reset-password"];
+const PUBLIC_PAGES = ["/", "/about", "/pricing", "/demo", "/site", "/sites", "/login", "/register", "/landing", "/welcome", "/forgot-password", "/reset-password"];
 
 // Public page patterns — checked with startsWith
 const PUBLIC_PAGE_PATTERNS = ["/site/"];

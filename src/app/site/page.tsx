@@ -12,6 +12,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { getAllSiteSlugs, getSiteData } from "./[businessSlug]/data";
 
+export const dynamic = "force-dynamic";
+
 /**
  * Page metadata
  */

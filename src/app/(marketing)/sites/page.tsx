@@ -24,6 +24,16 @@ const examples = [
     rating: 4.8,
     reviews: 247,
   },
+  {
+    slug: 'bright-smile',
+    name: 'Bright Smile Dental',
+    type: 'Dental',
+    location: 'Austin, TX',
+    description: 'Family dentistry in North Austin. Services, booking, patient reviews, and insurance info — generated from a 5-minute conversation.',
+    image: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=800&q=80',
+    rating: 4.9,
+    reviews: 183,
+  },
 ];
 
 export default function SitesPage() {

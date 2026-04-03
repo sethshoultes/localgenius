@@ -81,7 +81,7 @@ export default async function SitePage({ params }: { params: Promise<{ businessS
         .s-nav-links a:hover { color: #A35535; }
         .s-hero { position: relative; min-height: 80vh; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; }
         .s-hero-bg { position: absolute; inset: 0; background-size: cover; background-position: center; z-index: 0; }
-        .s-hero-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(28,25,23,0.45), rgba(28,25,23,0.75)); z-index: 1; }
+        .s-hero-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0.7)); z-index: 1; }
         .s-hero-content { position: relative; z-index: 2; max-width: 700px; padding: 2rem 1.25rem; color: #FFFFFF !important; }
         .s-hero h1 { font-family: 'Lora', Georgia, serif; font-size: 2.25rem; font-weight: 700; line-height: 1.2; margin: 0 0 1rem; color: #FFFFFF !important; }
         .s-hero p { font-size: 1.125rem; opacity: 0.92; margin: 0 0 2rem; color: #FFFFFF !important; }
@@ -129,7 +129,7 @@ export default async function SitePage({ params }: { params: Promise<{ businessS
           <div className="s-container s-nav-inner">
             <Link href={`/site/${businessSlug}`} className="s-nav-brand">{site.name}</Link>
             <ul className="s-nav-links">
-              <li><a href="#menu">{servicesNavLabel}</a></li>
+              <li><a href={isRestaurant ? '#menu' : '#services'}>{servicesNavLabel}</a></li>
               <li><a href="#hours">Hours</a></li>
               <li><a href="#reviews">Reviews</a></li>
             </ul>
@@ -168,8 +168,8 @@ export default async function SitePage({ params }: { params: Promise<{ businessS
           </div>
         </section>
 
-        {/* Menu Highlights */}
-        <section className="s-section s-section--muted" id="menu">
+        {/* Menu / Services */}
+        <section className="s-section s-section--muted" id={isRestaurant ? 'menu' : 'services'}>
           <div className="s-container">
             <p className="s-label">{servicesLabel}</p>
             <h2 className="s-heading">{servicesHeading}</h2>
